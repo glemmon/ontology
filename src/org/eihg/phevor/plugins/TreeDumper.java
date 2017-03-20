@@ -41,7 +41,7 @@ public class TreeDumper extends ServerPlugin
 		while(root_nodes.hasNext()){
 			Node root_node = root_nodes.next();
 			Label onto_label = get_onto_label(root_node);
-			if(onto_label == label) return root_node;
+			if(onto_label.equals(label)) return root_node;
 		}
 		throw new RuntimeException("No matching label");
 	}
