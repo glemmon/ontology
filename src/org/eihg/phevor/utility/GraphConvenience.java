@@ -32,6 +32,8 @@ public class GraphConvenience {
 		HP,
 		MP,
 		NCBI_GENE,
+		ICD9dx,
+		ICD10dx,
 		ROOT
 	}
 	
@@ -116,7 +118,7 @@ public class GraphConvenience {
 		return get_traversed_paths(node, ascendants);	
 	}
 	
-	static ResourceIterable<Path> get_descendant_paths(Node node){
+	public static ResourceIterable<Path> get_descendant_paths(Node node){
 		TraversalDescription ascendants = get_descendants_traversal_description();
 		return get_traversed_paths(node, ascendants);	
 	}
@@ -205,7 +207,7 @@ public class GraphConvenience {
 		return description.traverse(node).nodes();
 	}
 	
-	static private ResourceIterable<Path> get_traversed_paths(Node node, TraversalDescription description){
+	public static ResourceIterable<Path> get_traversed_paths(Node node, TraversalDescription description){
 		return description.traverse(node);
 	}
 }
