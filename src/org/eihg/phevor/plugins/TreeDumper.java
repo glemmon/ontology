@@ -38,12 +38,16 @@ public class TreeDumper extends ServerPlugin
 	
 	private static Node find_root(Label label){
 		ResourceIterator<Node> root_nodes =  GraphConvenience.get_roots();
+		StringBuilder sb = new StringBuilder();
 		while(root_nodes.hasNext()){
 			Node root_node = root_nodes.next();
 			Label onto_label = get_onto_label(root_node);
+			sb.append(root_node);
+			sb.append(onto_label);
 			if(onto_label.equals(label)) return root_node;
+			
 		}
-		throw new RuntimeException("No matching label");
+		throw new RuntimeException("No matching label :"+label+sb.toString());
 	}
 	
 	private static String path_to_mtree(Path path){
