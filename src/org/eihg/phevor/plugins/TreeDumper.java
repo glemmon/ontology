@@ -51,9 +51,10 @@ public class TreeDumper extends ServerPlugin
 	}
 	
 	private static String path_to_mtree(Path path){
-		return String.join(".", 
+		return String.join(".", 			
 			Iterables.map(n->n.getProperty("id").toString(), path.nodes())
-		);
+		) +" "+	path.startNode().getProperty("name", "").toString()
+;
 	}
 	
 	// Assumes graph_util(db) has already been called
