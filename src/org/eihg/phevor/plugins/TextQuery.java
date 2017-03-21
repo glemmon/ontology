@@ -20,13 +20,13 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
+import org.neo4j.helpers.collection.Iterators;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
 import org.neo4j.server.plugins.PluginTarget;
 import org.neo4j.server.plugins.ServerPlugin;
 import org.neo4j.server.plugins.Source;
 import org.neo4j.graphdb.Path;
-import org.neo4j.helpers.collection.IteratorUtil;
 
 public class TextQuery extends ServerPlugin
 {
@@ -45,7 +45,7 @@ public class TextQuery extends ServerPlugin
 						:"MATCH (n) WHERE n.name =~ '"+ query_str + "' RETURN n";
 		Result result = Utility.graph_util().get_graph().execute( query );
 		Iterator<Node> n_column = result.columnAs( "n" );
-		return IteratorUtil.asIterable( n_column );
+		return Iterators.asIterable( n_column );
 	}
 
 	private static Node find_root(Label label){

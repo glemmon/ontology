@@ -1,11 +1,10 @@
 package org.eihg.phevor.utility;
 
-import java.util.Iterator;
+import java.io.File;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.helpers.collection.IteratorUtil;
 import org.neo4j.unsafe.batchinsert.BatchInserter;
 
 public class Utility implements AutoCloseable{
@@ -24,9 +23,9 @@ public class Utility implements AutoCloseable{
 	
 	private Utility(String db_path, String config_path){
 		this(new GraphDatabaseFactory()
-		.newEmbeddedDatabaseBuilder(db_path)
-		.loadPropertiesFromFile(config_path)
-		.newGraphDatabase()	
+			.newEmbeddedDatabaseBuilder(new File(db_path))
+			.loadPropertiesFromFile(config_path)
+			.newGraphDatabase()	
 		);	
 	}
 	
@@ -99,13 +98,5 @@ public class Utility implements AutoCloseable{
 		        }
 		    } 
 	    );
-	}
-	
-	static int count(Iterable<?> iterable) {
-		return count(iterable.iterator());
-	}
-	
-	static int count(Iterator<?> iterator) {
-		return IteratorUtil.count(iterator);
 	}
 }

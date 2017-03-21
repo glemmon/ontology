@@ -16,11 +16,11 @@ import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.graphdb.traversal.TraversalDescription;
-import org.neo4j.tooling.GlobalGraphOperations;
+import org.neo4j.helpers.collection.Iterables;
 
 public class GraphConvenience {
 	private static final int default_depth = 1000;
-	private static int node_count = -1; // We assume a read-only DB
+	private static long node_count = -1; // We assume a read-only DB
 	
 	public static enum Labels implements Label {
 		OD,
@@ -79,9 +79,10 @@ public class GraphConvenience {
 		return path_lengths;
 	}
 	
-	public static int node_count(){
+	public static long node_count(){
 		if(node_count == -1){
-			node_count = Utility.count(GlobalGraphOperations.at(Utility.graph_util().get_graph()).getAllNodes());
+			ResourceIterable<Node> ri = Utility.graph_util().get_graph().getAllNodes();
+			node_count = Iterables.count(ri);
 		}
 		return node_count;
 	}
