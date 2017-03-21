@@ -8,7 +8,7 @@ import json
 
 headers={"Content-Type":"application/json"}
 #TODO this should extend an abstract Plugin class
-class UPDB_plugin():
+class PhevorPlugin():
 	def __init__(self, plugin_name, fxn_name):
 		authenticate("localhost:7477", "neo4j", "phevor")
 		graph = Graph('http://localhost:7477/db/data') # the default location
@@ -23,10 +23,9 @@ class UPDB_plugin():
 			print('ServerError. Args were:',body)
 			raise(err)
 
-
 def test():
-	plugin = UPDB_plugin('TreeDumper', 'dump_tree')
-	args = {'label':'ICD9dx'}
+	plugin = phevor_plugin('TreeDumper', 'dump_tree')
+	args = {'label':'ICD10dx'}
 	print(plugin.call(**args))
 
 if __name__=='__main__':
