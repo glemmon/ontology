@@ -120,8 +120,8 @@ public class GraphConvenience {
 	}
 	
 	public static ResourceIterable<Path> get_descendant_paths(Node node){
-		TraversalDescription ascendants = get_descendants_traversal_description();
-		return get_traversed_paths(node, ascendants);	
+		TraversalDescription descendant = get_descendants_traversal_description();
+		return get_traversed_paths(node, descendant);	
 	}
 	
 	static ResourceIterable<Node> get_ascendants(Node node){
@@ -200,8 +200,9 @@ public class GraphConvenience {
 	
 	public static TraversalDescription get_descendants_traversal_description(){
 		return Utility.graph_util().get_graph().traversalDescription()
+				.expand(descendants_path)
 				.evaluator(Evaluators.excludeStartPosition())
-				.expand(descendants_path);
+				;
 	}
 	
 	static private ResourceIterable<Node> get_traversed_nodes(Node node, TraversalDescription description){
