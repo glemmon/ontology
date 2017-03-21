@@ -44,7 +44,7 @@ public class TreeDumper extends ServerPlugin
 			Label onto_label = get_onto_label(root_node);
 			sb.append(root_node);
 			sb.append(onto_label);
-			if(onto_label.equals(label)) return root_node;
+			if(onto_label.name().equals(label.name())) return root_node;
 			
 		}
 		throw new RuntimeException("No matching label :"+label+sb.toString());
