@@ -52,7 +52,7 @@ public class TreeDumper extends ServerPlugin
 	}
 	
 	private static String path_to_mtree(Path path){
-		return String.join(".", 			
+		return String.join("/", 			
 			Iterables.map(n->n.getProperty("id").toString(), path.nodes())
 		) +" "+	path.endNode().getProperty("name", "").toString();
 	}
