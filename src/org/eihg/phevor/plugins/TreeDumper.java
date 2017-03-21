@@ -29,7 +29,7 @@ public class TreeDumper extends ServerPlugin
 	private static Label get_onto_label(Node node){
 		Iterable<Label> labels = node.getLabels();
 		for(Label label : labels){
-			if(label.equals( GraphConvenience.Labels.ROOT )) continue;
+			if(label.name().equals( GraphConvenience.Labels.ROOT.name() )) continue;
 			return label;
 		}
 		assert(false); 
