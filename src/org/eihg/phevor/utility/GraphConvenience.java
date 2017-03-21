@@ -124,7 +124,7 @@ public class GraphConvenience {
 		return get_traversed_paths(node, descendant);	
 	}
 	
-	public static Iterable get_descendant_paths(Iterable<Node> nodes) {
+	public static ResourceIterable<Path> get_descendant_paths(Iterable<Node> nodes) {
 		TraversalDescription descendant = get_descendants_traversal_description();
 		return get_traversed_paths(nodes, descendant);	
 	}
