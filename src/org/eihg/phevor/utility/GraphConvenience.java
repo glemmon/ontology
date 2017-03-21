@@ -162,7 +162,6 @@ public class GraphConvenience {
 	
 	public static int count_children(Node node){
 		int children=0;
-		// Obviously a person can't be a dad and a mom, but this is easier than checking gender
 		children += node.getDegree(RelTypes.is_a, Direction.INCOMING);
 		children += node.getDegree(RelTypes.part_of, Direction.INCOMING);
 		return children;

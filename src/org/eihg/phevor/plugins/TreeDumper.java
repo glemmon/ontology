@@ -61,7 +61,7 @@ public class TreeDumper extends ServerPlugin
 	private static String traverse(String label_str){
 		Label label = Labels.valueOf(label_str);
 		Node root = find_root(label);
-		ResourceIterable<Node> children = GraphConvenience.get_parents(root); // Parents terminology adopted from persons not really applicable here
+		ResourceIterable<Node> children = GraphConvenience.get_children(root); // Parents terminology adopted from persons not really applicable here
 		return String.join("\n",
 			Iterables.map(TreeDumper::path_to_mtree, GraphConvenience.get_descendant_paths(children))
 		);
