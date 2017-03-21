@@ -15,6 +15,7 @@ import org.neo4j.server.plugins.PluginTarget;
 import org.neo4j.server.plugins.ServerPlugin;
 import org.neo4j.server.plugins.Source;
 import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.helpers.collection.Iterables;
 
 public class TreeDumper extends ServerPlugin
@@ -53,16 +54,16 @@ public class TreeDumper extends ServerPlugin
 	private static String path_to_mtree(Path path){
 		return String.join(".", 			
 			Iterables.map(n->n.getProperty("id").toString(), path.nodes())
-		) +" "+	path.startNode().getProperty("name", "").toString()
-;
+		) +" "+	path.endNode().getProperty("name", "").toString();
 	}
 	
 	// Assumes graph_util(db) has already been called
 	private static String traverse(String label_str){
 		Label label = Labels.valueOf(label_str);
 		Node root = find_root(label);
+		ResourceIterable<Node> children = GraphConvenience.get_parents(root); // Parents terminology adopted from persons not really applicable here
 		return String.join("\n",
-			Iterables.map(TreeDumper::path_to_mtree, GraphConvenience.get_descendant_paths(root))
+			Iterables.map(TreeDumper::path_to_mtree, GraphConvenience.get_descendant_paths(children))
 		);
 	}
 	
