@@ -42,7 +42,7 @@ public class TextQuery extends ServerPlugin
 
 	private static Iterable<Node> find_matching_nodes(String query, boolean hp_only){
 		String label = hp_only ? ":HP" : "";
-		String cypher = "MATCH (n"+label+") WHERE n.full_name =~ "'+ query +"' RETURN n";
+		String cypher = "MATCH (n"+label+") WHERE n.full_name =~ '"+ query +"' RETURN n";
 		Result result = Utility.graph_util().get_graph().execute( cypher );
 		Iterator<Node> n_column = result.columnAs( "n" );
 		return Iterators.asIterable( n_column );
