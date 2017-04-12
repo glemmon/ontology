@@ -1,6 +1,7 @@
 //package org.hci.updb;
 package org.eihg.phevor.plugins;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.eihg.phevor.utility.GraphConvenience;
 import org.eihg.phevor.utility.GraphConvenience.Labels;
 import org.eihg.phevor.utility.Utility;
@@ -96,11 +97,11 @@ public class TreeDumper extends ServerPlugin
 			@Description( "There should be one node with this label and the ROOT label" )
 			@Parameter( name = "label" ) String query,
 			@Description( "Whether to pad output with zeros" )
-			@Parameter( name = "pad", optional = true ) boolean pad
+			@Parameter( name = "pad", optional = true ) Boolean pad
 
 	){       
 		try(Utility u = Utility.graph_util(db)){
-			return traverse(query, pad);
+			return traverse(query, BooleanUtils.toBoolean(pad));
 		}
 	}
 }
