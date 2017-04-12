@@ -29,6 +29,7 @@ import org.neo4j.helpers.collection.Iterables;
 
 public class TreeDumper extends ServerPlugin
 {
+	//TODO define these in a text file
 	private static Map<Label, Short> padding = ImmutableMap.<Label, Short>builder()
 			.put(OD,(short)6)
 			//.put(CHEBI, NULL) // CHEBI is NOT padded

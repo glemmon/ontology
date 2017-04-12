@@ -40,13 +40,9 @@ public class TextQuery extends ServerPlugin
 		logger.setLevel(Level.ALL);
 	}
 
-	private static Iterable<Node> find_matching_nodes(String query_str, boolean hp_only, boolean search_by_id){
+	private static Iterable<Node> find_matching_nodes(String query, boolean hp_only){
 		String label = hp_only ? ":HP" : "";
-		String property = search_by_id ? "id" : "name";
-		boolean is_int = StringUtils.isNumeric(query_str);
-		String compare = is_int ? " = " : " =~ ";
-		Object query = is_int ? Integer.parseInt(query_str) : query_str;
-		String cypher = "MATCH (n"+label+") WHERE n."+property+ compare +"'"+ query +"' RETURN n";
+		String cypher = "MATCH (n"+label+") WHERE n.label =~ "+ query +"' RETURN n";
 		Result result = Utility.graph_util().get_graph().execute( cypher );
 		Iterator<Node> n_column = result.columnAs( "n" );
 		return Iterators.asIterable( n_column );
@@ -72,9 +68,7 @@ public class TextQuery extends ServerPlugin
 		try{
 			object_builder.add("id", node.getId());
 			object_builder.add("label", label.toString());
-			String id = node.getProperty("id").toString();
-			String name = node.getProperty("name").toString();
-			object_builder.add("title", label.toString()+":"+id+" "+name);
+			object_builder.add("title", node.getProperty("full_name").toString());
 		}catch(Exception e){
 			String error = e.toString()+"\n";
 			error += node.toString()+",";
@@ -108,10 +102,10 @@ public class TextQuery extends ServerPlugin
 	}
 	
 	// Assumes graph_util(db) has already been called
-	private static JsonArrayBuilder collect_paths(String query, boolean hp_only, boolean search_by_id){
+	private static JsonArrayBuilder collect_paths(String query, boolean hp_only){
 		JsonArrayBuilder array_builder = Json.createArrayBuilder();
 
-		for( Node result : find_matching_nodes(query, hp_only, search_by_id)){
+		for( Node result : find_matching_nodes(query, hp_only)){
 			Label label = get_onto_label(result);
 			Node root = find_root(label);
 			//TODO traverser framework to collect nodes faster than shortest path?
@@ -125,10 +119,10 @@ public class TextQuery extends ServerPlugin
 	}
 
 	// Assumes graph_util(db) has already been called
-	private static JsonArrayBuilder collect_nodes(String query, boolean hp_only, boolean search_by_id){
+	private static JsonArrayBuilder collect_nodes(String query, boolean hp_only){
 		JsonArrayBuilder array_builder = Json.createArrayBuilder();
 
-		for( Node result : find_matching_nodes(query, hp_only, search_by_id)){
+		for( Node result : find_matching_nodes(query, hp_only)){
 			Label label = get_onto_label(result);
 			array_builder.add(node_to_json(result,label));
 		}
@@ -141,16 +135,14 @@ public class TextQuery extends ServerPlugin
 			@Source GraphDatabaseService db,            
 			@Description( "Text query for onto term search" )
 			@Parameter( name = "query" ) String query,
-			@Parameter( name = "hp_only", optional = true ) Boolean hp_only,
-			@Parameter( name = "search_by_id", optional = true) Boolean search_by_id
+			@Parameter( name = "hp_only", optional = true ) Boolean hp_only
 			){       
 	
 		JsonArrayBuilder paths = null;
 		if (hp_only == null) hp_only = false;
-		if (search_by_id == null) search_by_id = false;
 
 		try(Utility u = Utility.graph_util(db)){
-			paths = collect_paths(query, hp_only, search_by_id);
+			paths = collect_paths(query, hp_only);
 		}
 	
 		return paths.build().toString();
@@ -162,16 +154,14 @@ public class TextQuery extends ServerPlugin
 			@Source GraphDatabaseService db,            
 			@Description( "Text query for onto term search" )
 			@Parameter( name = "query" ) String query,
-			@Parameter( name = "hp_only", optional = true ) Boolean hp_only,
-			@Parameter( name = "search_by_id", optional = true) Boolean search_by_id
+			@Parameter( name = "hp_only", optional = true ) Boolean hp_only
 			){       
 	
 		JsonArrayBuilder nodes = null;
 		if (hp_only == null) hp_only = false;
-		if (search_by_id == null) search_by_id = false;
 	
 		try(Utility u = Utility.graph_util(db)){
-			nodes = collect_nodes(query, hp_only, search_by_id);
+			nodes = collect_nodes(query, hp_only);
 		}
 	
 		return nodes.build().toString();
