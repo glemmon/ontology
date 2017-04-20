@@ -66,7 +66,7 @@ public class TextQuery extends ServerPlugin
 	private static JsonObjectBuilder node_to_json(Node node, Label label){
 		JsonObjectBuilder object_builder = Json.createObjectBuilder();
 		try{
-			object_builder.add("id", node.getId());
+			object_builder.add("id", node.getId());// This is the Neo4j ID
 			object_builder.add("label", label.toString());
 			object_builder.add("title", node.getProperty("full_name").toString());
 		}catch(Exception e){

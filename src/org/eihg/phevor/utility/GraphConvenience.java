@@ -65,11 +65,11 @@ public class GraphConvenience {
         max_depth = max_depth==null ? default_depth : max_depth;
 		ArrayList<Integer> path_lengths = new ArrayList<>();
 		HashMap<Node,int[]> ancestor_lengths = new HashMap<>();
-		for(Path path1 : get_ascendant_paths(n1)){
+		for(Path path1 : get_ascendant_paths(n1, false)){
 			int[] lengths = {path1.length()};
 			ancestor_lengths.merge(path1.endNode(), lengths, (x,y) -> ArrayUtils.addAll(x,y)); // Java 1.8 Lambda
         }
-       	for(Path path2 : get_ascendant_paths(n2)){
+       	for(Path path2 : get_ascendant_paths(n2, false)){
     		if(ancestor_lengths.containsKey(path2.endNode())){
     			for(int length : ancestor_lengths.get(path2.endNode())){
     				path_lengths.add(length+path2.length());
@@ -114,8 +114,8 @@ public class GraphConvenience {
 	//	return get_traversed_nodes(node, sub_graph);	
 	//}
 	
-	static ResourceIterable<Path> get_ascendant_paths(Node node){
-		TraversalDescription ascendants = get_ascendants_traversal_description();
+	static ResourceIterable<Path> get_ascendant_paths(Node node, boolean include_self){
+		TraversalDescription ascendants = get_ascendants_traversal_description(include_self);
 		return get_traversed_paths(node, ascendants);	
 	}
 	
@@ -129,8 +129,8 @@ public class GraphConvenience {
 		return get_traversed_paths(nodes, descendant);	
 	}
 	
-	static ResourceIterable<Node> get_ascendants(Node node){
-		TraversalDescription ascendants = get_ascendants_traversal_description();
+	static ResourceIterable<Node> get_ascendants(Node node, boolean include_self){
+		TraversalDescription ascendants = get_ascendants_traversal_description(include_self);
 		return get_traversed_nodes(node, ascendants);	
 	}
 	
@@ -174,10 +174,10 @@ public class GraphConvenience {
 				.expand(ascendants_path);
 	}
 	
-	public static TraversalDescription get_ascendants_traversal_description(){
-		return Utility.graph_util().get_graph().traversalDescription()
-				.evaluator(Evaluators.excludeStartPosition())
+	public static TraversalDescription get_ascendants_traversal_description(boolean include_self){
+		TraversalDescription td =  Utility.graph_util().get_graph().traversalDescription()
 				.expand(ascendants_path);
+		return include_self ? td : td.evaluator(Evaluators.excludeStartPosition());
 	}
 	
 	// Including Self!
@@ -189,6 +189,11 @@ public class GraphConvenience {
 	
 	public static ResourceIterable<Node> get_parents(Node node){
 		return get_traversed_nodes(node,get_parent_traversal_description());
+	}
+	
+	public static ResourceIterable<Node> get_ascendants(Iterable<Node> children, boolean include_self) {
+		return get_traversed_nodes(children,get_ascendants_traversal_description(include_self));
+
 	}
 	
 	public static TraversalDescription get_children_traversal_description(){
@@ -213,11 +218,15 @@ public class GraphConvenience {
 		return description.traverse(node).nodes();
 	}
 	
-	public static ResourceIterable<Path> get_traversed_paths(Node node, TraversalDescription description){
+	static private ResourceIterable<Node> get_traversed_nodes(Iterable<Node> nodes, TraversalDescription description){
+		return description.traverse(nodes).nodes();
+	}
+	
+	static private ResourceIterable<Path> get_traversed_paths(Node node, TraversalDescription description){
 		return description.traverse(node);
 	}
 	
-	public static ResourceIterable<Path> get_traversed_paths(Iterable<Node> nodes, TraversalDescription description){
+	static private ResourceIterable<Path> get_traversed_paths(Iterable<Node> nodes, TraversalDescription description){
 		return description.traverse(nodes);
 	}
 }
