@@ -1,60 +1,104 @@
 //package org.hci.updb;
 package org.eihg.phevor.plugins;
 
-import org.eihg.phevor.utility.GraphConvenience;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.ArrayUtils;
 import org.eihg.phevor.utility.GraphConvenience.Labels;
+import org.eihg.phevor.utility.GraphConvenience.RelTypes;
 import org.eihg.phevor.utility.Utility;
 
 import java.util.List;
-import java.util.Arrays;
+import java.util.Map;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
 
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
 import org.neo4j.server.plugins.PluginTarget;
 import org.neo4j.server.plugins.ServerPlugin;
 import org.neo4j.server.plugins.Source;
 
-import org.neo4j.helpers.collection.Iterables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 
 public class AddParents extends ServerPlugin
 {
-	private static Node id2node(GraphDatabaseService db, String id, Label onto){
-		final Node n = db.findNode(onto, "id", id);
-		if(n==null){System.out.println("NO ID: "+id); throw new RuntimeException("No ID: "+id);}
-		return n;
+	private final static Map<String,Label> domain_label = ImmutableMap.of("ICD9CM", Labels.ICD9dx, "ICD-10-CM", Labels.ICD10dx);
+	
+	private static List<String> parents_from_ccs(String ccs_id){
+		List<String> parents = Lists.newArrayList();
+		parents.add(ccs_id);
+		for(int i=ccs_id.length()-1; i > 0; --i ){
+			if(ccs_id.charAt(i)!='.') continue;
+			parents.add(ccs_id.substring(0, i));
+		}
+		return parents;
 	}
 	
-	private static String node2id(Node n){
-		return (String) n.getProperty("long_id");
+	private static String find_ccs(GraphDatabaseService db, String code, Label label){
+		Node n = db.findNode(label, "id", code);
+		if(n==null) return "";
+		Iterable<Relationship> rels = n.getRelationships(RelTypes.is_a, Direction.OUTGOING);
+		List<String> ccs_codes = Lists.newArrayList();
+		for( Relationship rel : rels ){
+			Node ccs = rel.getEndNode();
+			if( ! ccs.hasLabel(label) ) continue;
+			List<String> ccs_ids = parents_from_ccs((String) ccs.getProperty("long_id"));
+			ccs_codes.addAll(ccs_ids);
+		}
+		if(ccs_codes.size() < 1) return find_ccs(db, code+"0", label);
+		return String.join(",", ccs_codes);
 	}
 	
-	// Assumes graph_util(db) has already been called
-	private static String _add_parents(GraphDatabaseService db, String children_str, String onto_str){
-		Label onto = Labels.valueOf(onto_str);
-		List<String> children_strs = Arrays.asList(children_str.split("\\s*,\\s*"));
-		Iterable<Node> children = Iterables.map(c->id2node(db,c,onto), children_strs);
-		// parents to include children
-		Iterable<Node> ascendants = GraphConvenience.get_ascendants(children, true);
-		Iterable<String> ascendants_str = Iterables.map(AddParents::node2id, ascendants);
-		return String.join(",", ascendants_str);
+	private static String get_ccs(GraphDatabaseService db, String code, String domain){
+		Label label = domain_label.get(domain);
+		code = code.trim();
+		code = String.join("", code.split(".")); // remove punctuation
+		return find_ccs(db, code, label);
+	}
+		
+	private static void _add_parents_to_file(GraphDatabaseService db, String in, String out) throws IOException{
+		Reader reader = new FileReader(in);
+		Appendable writer = new FileWriter(in);
+		CSVFormat format = CSVFormat.TDF.withFirstRecordAsHeader();
+		Iterable<CSVRecord> records = format.parse(reader);
+		String[] new_header = ArrayUtils.add(format.getHeader(), "CCS");
+		
+		final CSVPrinter printer = format.withHeader(new_header).print(writer);
+		//printer.printRecord(Arrays.asList(new_header));
+		for (CSVRecord record : records) {
+			Map<String,String> r_map = record.toMap();
+			String domain = r_map.get("DOMAIN");
+			String code = r_map.get("CODE");
+			r_map.put("CCS", get_ccs(db, code, domain));
+			printer.printRecord(r_map);
+		}
+
+		
 	}
 	
 	@Description( "Find ROOT associated with this label and return the tree in 'mtree' format" )
 	@PluginTarget( GraphDatabaseService.class )
-	public String add_parents(
+	public String add_parents_to_file(
 			@Source GraphDatabaseService db,            
-			@Description( "Comma separated list of child IDs" )
-			@Parameter( name = "children" ) String query,
-			@Description( "Ontology from which to search" )
-			@Parameter( name = "ontology" ) String onto
+			@Description( "Input File" )
+			@Parameter( name = "in_file" ) String in,
+			@Description( "Output File" )
+			@Parameter( name = "out_file" ) String out
 
-	){       
+	) throws IOException{       
 		try(Utility u = Utility.graph_util(db)){
-			return _add_parents(db, query, onto);
+			_add_parents_to_file(db, in, out);
+			return "complete";
 		}
 	}
 }
