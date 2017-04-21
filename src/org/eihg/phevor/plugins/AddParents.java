@@ -34,7 +34,6 @@ import com.google.common.collect.Lists;
 
 public class AddParents extends ServerPlugin
 {
-	private static final Path server = Paths.get("/opt/neo4j-community/3.1.1-ontos");
 	private static final Map<String,Label> domain_label = ImmutableMap.of("ICD9CM", Labels.ICD9dx, "ICD-10-CM", Labels.ICD10dx);
 	
 	private static List<String> parents_from_ccs(String ccs_id){
@@ -70,23 +69,30 @@ public class AddParents extends ServerPlugin
 	}
 		
 	private static void _add_parents_to_file(GraphDatabaseService db, String in, String out) throws IOException{
-		Reader reader = new FileReader(in);
-		Appendable writer = new FileWriter(out);
-		CSVFormat format = CSVFormat.TDF.withFirstRecordAsHeader();
-		Iterable<CSVRecord> records = format.parse(reader);
-		String[] new_header = ArrayUtils.add(format.getHeader(), "CCS");
+		final CSVFormat format = CSVFormat.TDF.withFirstRecordAsHeader();
+		try(
+				final Reader reader = new FileReader(in);
+		){
+			final Iterable<CSVRecord> records = format.parse(reader);
+			final String[] new_header = ArrayUtils.add(format.getHeader(), "CCS");
+			
+			try(		
+					final FileWriter writer = new FileWriter(out);
+					final CSVPrinter printer = format.withHeader(new_header).print(writer)
+			){
+				//printer.printRecord(Arrays.asList(new_header));
+				for (CSVRecord record : records) {
+					Map<String,String> r_map = record.toMap();
+					String domain = r_map.get("DOMAIN");
+					String code = r_map.get("CODE");
+					r_map.put("CCS", get_ccs(db, code, domain));
+					printer.printRecord(r_map);
 		
-		final CSVPrinter printer = format.withHeader(new_header).print(writer);
-		//printer.printRecord(Arrays.asList(new_header));
-		for (CSVRecord record : records) {
-			Map<String,String> r_map = record.toMap();
-			String domain = r_map.get("DOMAIN");
-			String code = r_map.get("CODE");
-			r_map.put("CCS", get_ccs(db, code, domain));
-			printer.printRecord(r_map);
+				}
+				printer.flush();
+		        printer.close();
+			}
 		}
-
-		
 	}
 	
 	@Description( "Find ROOT associated with this label and return the tree in 'mtree' format" )
