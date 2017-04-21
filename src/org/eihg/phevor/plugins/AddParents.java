@@ -2,6 +2,7 @@
 package org.eihg.phevor.plugins;
 
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.ArrayUtils;
@@ -78,8 +79,8 @@ public class AddParents extends ServerPlugin
 		final CSVFormat format = CSVFormat.TDF.withFirstRecordAsHeader();
 		try(
 				final Reader reader = new FileReader(in);
+				final CSVParser parser = new CSVParser(reader, format);
 		){
-			final Iterable<CSVRecord> records = format.parse(reader);
 			final String[] new_header = ArrayUtils.add(format.getHeader(), "CCS");
 			
 			try(		
@@ -87,7 +88,7 @@ public class AddParents extends ServerPlugin
 					final CSVPrinter printer = format.withHeader(new_header).print(writer)
 			){
 				printer.printRecord(Arrays.asList(new_header));
-				for (CSVRecord record : records) {
+				for (CSVRecord record : parser) {
 					Map<String,String> r_map = record.toMap();
 					String domain = r_map.get("DOMAIN");
 					String code = r_map.get("CODE");
