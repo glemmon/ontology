@@ -60,7 +60,7 @@ public class AddParents extends ServerPlugin
 		List<String> ccs_codes = Lists.newArrayList();
 		for( Relationship rel : rels ){
 			Node ccs = rel.getEndNode();
-			if( ! ccs.hasLabel(label) ) continue;
+			if( ! ccs.hasLabel(Labels.CCS) ) continue;
 			List<String> ccs_ids = parents_from_ccs((String) ccs.getProperty("long_id"));
 			ccs_codes.addAll(ccs_ids);
 		}

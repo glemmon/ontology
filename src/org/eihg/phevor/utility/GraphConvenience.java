@@ -34,7 +34,8 @@ public class GraphConvenience {
 		NCBI_GENE,
 		ICD9dx,
 		ICD10dx,
-		ROOT
+		ROOT, 
+		CCS
 	}
 	
 	public static enum RelTypes implements RelationshipType
