@@ -9,14 +9,14 @@ import org.eihg.phevor.utility.GraphConvenience.Labels;
 import org.eihg.phevor.utility.GraphConvenience.RelTypes;
 import org.eihg.phevor.utility.Utility;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -30,6 +30,7 @@ import org.neo4j.server.plugins.ServerPlugin;
 import org.neo4j.server.plugins.Source;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 public class AddParents extends ServerPlugin
@@ -63,8 +64,7 @@ public class AddParents extends ServerPlugin
 	
 	private static String get_ccs(GraphDatabaseService db, String code, String domain){
 		Label label = domain_label.get(domain);
-		code = code.trim();
-		code = String.join("", code.split(".")); // remove punctuation
+		code = code.trim().replace(".", ""); // remove punctuation
 		return find_ccs(db, code, label);
 	}
 		
@@ -80,14 +80,14 @@ public class AddParents extends ServerPlugin
 					final FileWriter writer = new FileWriter(out);
 					final CSVPrinter printer = format.withHeader(new_header).print(writer)
 			){
-				//printer.printRecord(Arrays.asList(new_header));
+				printer.printRecord(Arrays.asList(new_header));
 				for (CSVRecord record : records) {
 					Map<String,String> r_map = record.toMap();
 					String domain = r_map.get("DOMAIN");
 					String code = r_map.get("CODE");
-					r_map.put("CCS", get_ccs(db, code, domain));
-					printer.printRecord(r_map);
-		
+					String ccs = get_ccs(db, code, domain);
+					Iterable<String> itrb = Iterables.concat(record, Collections.singletonList(ccs));
+					printer.printRecord(itrb);
 				}
 				printer.flush();
 		        printer.close();
