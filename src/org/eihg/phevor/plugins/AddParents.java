@@ -21,6 +21,7 @@ import java.io.Reader;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.MultipleFoundException;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.server.plugins.Description;
@@ -48,7 +49,12 @@ public class AddParents extends ServerPlugin
 	}
 	
 	private static String find_ccs(GraphDatabaseService db, String code, Label label){
-		Node n = db.findNode(label, "id", code);
+		Node n = null;
+		try{
+			n = db.findNode(label, "id", code);
+		}catch(MultipleFoundException mfe){
+			throw new MultipleFoundException("Label: "+label.name()+", Code: "+code );
+		}
 		if(n==null) return "";
 		Iterable<Relationship> rels = n.getRelationships(RelTypes.is_a, Direction.OUTGOING);
 		List<String> ccs_codes = Lists.newArrayList();
