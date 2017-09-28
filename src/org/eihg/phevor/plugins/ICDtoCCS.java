@@ -26,7 +26,7 @@ import org.neo4j.server.plugins.Source;
 
 public class ICDtoCCS extends ServerPlugin
 {	
-	//private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
+	private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
 
 	private static boolean has_rel(Node ccs, Node icd10){
 		for( Relationship r : icd10.getRelationships(Direction.OUTGOING, RelTypes.is_a)){
@@ -35,9 +35,9 @@ public class ICDtoCCS extends ServerPlugin
 		}
 		return false;
 	}
-	
+
 	private static void _icd10_to_ccs(GraphDatabaseService db, String in) throws IOException{
-		final CSVFormat format = CSVFormat.DEFAULT.withQuote('\'').withFirstRecordAsHeader();
+		final CSVFormat format = CSVFormat.DEFAULT.withFirstRecordAsHeader();
 		try(
 				final Reader reader = new FileReader(in);
 		){
@@ -45,14 +45,24 @@ public class ICDtoCCS extends ServerPlugin
 			String last_ccs_long_id = null;
 			Node last_ccs = null;
 			for (CSVRecord record : records) {
-				//logger.info("record: "+record.toString());
+				logger.info("record: "+record.toString());
 				Map<String,String> r_map = record.toMap();
-				//logger.info("r_map: "+r_map.toString());
-				String icd10_id = r_map.get("ICD-10-CM CODE");
-				String ccs_cat = r_map.get("CCS CATEGORY");
-				String ccs_parents = r_map.get("MULTI CCS LVL 2");
+				logger.info("r_map: "+r_map.toString());
+				String icd10_id = r_map.get("'ICD-10-CM CODE'");
+				icd10_id = icd10_id.replaceAll("'","");
+				if( icd10_id.length() > 3){
+					char[] icd10_chrs = icd10_id.toCharArray();
+					int index = 3;
+					String part1 = new String(icd10_chrs, 0, index);
+					String part2 = new String(icd10_chrs, index, icd10_chrs.length - index);
+					icd10_id = part1+'.'+part2;
+				}
+				String ccs_cat = r_map.get("'CCS CATEGORY'");
+				ccs_cat = ccs_cat.replaceAll("'","");
+				String ccs_parents = r_map.get("'MULTI CCS LVL 2'");
+				ccs_parents = ccs_parents.replaceAll("'","");
 				String ccs_long_id = ccs_parents+'.'+ccs_cat;
-				//logger.info("icd10_id: "+icd10_id+", ccs_id: "+ccs_long_id);
+				logger.info("icd10_id: "+icd10_id+", ccs_id: "+ccs_long_id);
 				Node ccs;
 				if(ccs_long_id.equals(last_ccs_long_id)){
 					ccs = last_ccs;
@@ -62,7 +72,10 @@ public class ICDtoCCS extends ServerPlugin
 					last_ccs = ccs;
 				}
 				Node icd10 = db.findNode(Labels.ICD10dx, "id", icd10_id);
-				//logger.info("icd10: "+icd10.toString()+", ccs: "+ccs.toString());
+				if(ccs==null) logger.info("ccs is null");
+				else logger.info("ccs: "+ccs.toString());
+				if(icd10==null) logger.info("icd10 is null");
+				else logger.info("icd10: "+icd10.toString());
 				//if(! has_rel(ccs, icd10)); // For speed we make sure all ICD10-CCS rels are removed
 				icd10.createRelationshipTo(ccs, RelTypes.is_a);
 			}
@@ -77,7 +90,7 @@ public class ICDtoCCS extends ServerPlugin
 			@Parameter( name = "in_file" ) String in
 	) throws IOException{       
 		try(Utility u = Utility.graph_util(db)){
-			//logger.info("In: "+in);
+			logger.info("In: "+in);
 			_icd10_to_ccs(db, in);
 			return "complete";
 		}
