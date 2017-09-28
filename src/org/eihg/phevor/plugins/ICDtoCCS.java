@@ -45,7 +45,9 @@ public class ICDtoCCS extends ServerPlugin
 			String last_ccs_long_id = null;
 			Node last_ccs = null;
 			for (CSVRecord record : records) {
+				logger.info("record: "+record.toString());
 				Map<String,String> r_map = record.toMap();
+				logger.info("r_map: "+r_map.toString());
 				String icd10_id = r_map.get("ICD-10-CM CODE");
 				String ccs_cat = r_map.get("CCS CATEGORY");
 				String ccs_parents = r_map.get("MULTI CCS LVL 2");
@@ -64,7 +66,6 @@ public class ICDtoCCS extends ServerPlugin
 				//if(! has_rel(ccs, icd10)); // For speed we make sure all ICD10-CCS rels are removed
 				icd10.createRelationshipTo(ccs, RelTypes.is_a);
 			}
-		
 		}
 	}
 	
