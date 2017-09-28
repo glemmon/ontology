@@ -1,2 +1,3 @@
 org.eihg.phevor.plugins.TextQuery
 org.eihg.phevor.plugins.TreeDumper
+org.eihg.phevor.plugins.ICDtoCCS
