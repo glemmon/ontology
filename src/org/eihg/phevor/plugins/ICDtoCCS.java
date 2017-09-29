@@ -100,7 +100,8 @@ public class ICDtoCCS extends ServerPlugin
 					ccs.setProperty("short_id", Integer.parseInt(ccs_single));
 				}
 				//if(! has_rel(ccs, icd10)); // For speed we make sure all ICD10-CCS rels are removed
-				icd10.createRelationshipTo(ccs, RelTypes.is_a);
+				Relationship r = icd10.createRelationshipTo(ccs, RelTypes.is_a);
+				logger.info("R: "+r.toString());
 			}
 		}
 	}
