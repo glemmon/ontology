@@ -67,7 +67,7 @@ public class ICDtoCCS extends ServerPlugin
 				if(ccs_long_id.equals(last_ccs_long_id)){
 					ccs = last_ccs;
 				}else{
-					ccs = db.findNode(Labels.CCS, "long_id", ccs_long_id);
+					ccs = db.findNode(Labels.CCSdx, "long_id", ccs_long_id);
 					last_ccs_long_id = ccs_long_id;
 					last_ccs = ccs;
 				}
