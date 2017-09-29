@@ -50,6 +50,7 @@ public class ICDtoCCS extends ServerPlugin
 		
 		ResourceIterator<Node> node_itr = db.findNodes(Labels.ICD10dx, "id", corrected_id);
 		List<Node> nodes = IteratorUtils.toList(node_itr);
+		node_itr.close();
 		if(nodes.size()==1) return nodes.get(0);
 		for(Node n : nodes) 	if(n.hasLabel(Labels.Diagnosis)) return n;
 		for(Node n : nodes) 	if(n.hasLabel(Labels.Section)) return n;
@@ -96,8 +97,13 @@ public class ICDtoCCS extends ServerPlugin
 				else logger.info("ccs: "+ccs.toString());
 				if(icd10==null) logger.info("icd10 is null");
 				else logger.info("icd10: "+icd10.toString());
+				logger.info("short_id: "+ccs_single);
 				if(! ccs.hasProperty("short_id") ){
-					ccs.setProperty("short_id", Integer.parseInt(ccs_single));
+					try{
+						ccs.setProperty("short_id", Integer.parseInt(ccs_single));
+					}catch(NumberFormatException e){
+						logger.info("short_id: "+ccs_single);
+					}
 				}
 				//if(! has_rel(ccs, icd10)); // For speed we make sure all ICD10-CCS rels are removed
 				Relationship r = icd10.createRelationshipTo(ccs, RelTypes.is_a);
