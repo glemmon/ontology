@@ -13,8 +13,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.eihg.phevor.utility.GraphConvenience.Labels;
 import org.eihg.phevor.utility.GraphConvenience.RelTypes;
-//import org.eihg.phevor.utility.Utility;
-import org.neo4j.graphdb.Direction;
+//import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -30,13 +29,13 @@ public class ICDtoCCS extends ServerPlugin
 {	
 	private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
 
-	private static boolean has_rel(Node ccs, Node icd10){
-		for( Relationship r : icd10.getRelationships(Direction.OUTGOING, RelTypes.is_a)){
-			if( icd10.equals(r.getEndNode() ))
-				return true;
-		}
-		return false;
-	}
+//	private static boolean has_rel(Node ccs, Node icd10){
+//		for( Relationship r : icd10.getRelationships(Direction.OUTGOING, RelTypes.is_a)){
+//			if( icd10.equals(r.getEndNode() ))
+//				return true;
+//		}
+//		return false;
+//	}
 
 	private static Node find_icd10(GraphDatabaseService db, String icd10_id, String name){
 		String corrected_id;
@@ -79,9 +78,7 @@ public class ICDtoCCS extends ServerPlugin
 			Node last_ccs = null;
 			for (CSVRecord record : records) {
 				Transaction tx = db.beginTx();
-				logger.info("record: "+record.toString());
 				Map<String,String> r_map = record.toMap();
-				logger.info("r_map: "+r_map.toString());
 				String icd10_id = get_sans_quotes(r_map, "'ICD-10-CM CODE'");
 				String icd_name = get_sans_quotes(r_map, "'ICD-10-CM CODE DESCRIPTION'");
 				String ccs_single = get_sans_quotes(r_map, "'CCS CATEGORY'");
@@ -95,11 +92,6 @@ public class ICDtoCCS extends ServerPlugin
 					last_ccs = ccs;
 				}
 				Node icd10 = find_icd10(db, icd10_id, icd_name);
-				if(ccs==null) logger.info("ccs is null");
-				else logger.info("ccs: "+ccs.toString());
-				if(icd10==null) logger.info("icd10 is null");
-				else logger.info("icd10: "+icd10.toString());
-				logger.info("short_id: "+ccs_single);
 				if(! ccs.hasProperty("short_id") ){
 					try{
 						ccs.setProperty("short_id", Integer.parseInt(ccs_single));
@@ -108,8 +100,7 @@ public class ICDtoCCS extends ServerPlugin
 					}
 				}
 				//if(! has_rel(ccs, icd10)); // For speed we make sure all ICD10-CCS rels are removed
-				Relationship r = icd10.createRelationshipTo(ccs, RelTypes.is_a);
-				logger.info("R: "+r.toString());
+				icd10.createRelationshipTo(ccs, RelTypes.is_a);
 				tx.success();
 				tx.close();
 			}
@@ -124,7 +115,6 @@ public class ICDtoCCS extends ServerPlugin
 			@Parameter( name = "in_file" ) String in
 	) throws IOException{       
 		//try(Utility u = Utility.graph_util(db)){
-		logger.info("In: "+in);
 		_icd10_to_ccs(db, in);
 		return "complete";
 		//}
