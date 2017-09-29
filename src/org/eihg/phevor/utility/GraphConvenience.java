@@ -36,7 +36,10 @@ public class GraphConvenience {
 		ICD10dx,
 		ROOT, 
 		CCSdx,
-		CCSpx
+		CCSpx, 
+		Diagnosis,
+		Section,
+		Chapter
 	}
 	
 	public static enum RelTypes implements RelationshipType

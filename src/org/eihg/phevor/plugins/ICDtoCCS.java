@@ -1,23 +1,24 @@
 //package org.hci.updb;
 package org.eihg.phevor.plugins;
 
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.eihg.phevor.utility.GraphConvenience.Labels;
 import org.eihg.phevor.utility.GraphConvenience.RelTypes;
 import org.eihg.phevor.utility.Utility;
-
-
-import java.util.Map;
-import java.util.logging.Logger;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
 import org.neo4j.server.plugins.PluginTarget;
@@ -36,6 +37,16 @@ public class ICDtoCCS extends ServerPlugin
 		return false;
 	}
 
+	private static Node find_icd10(GraphDatabaseService db, String icd10_id){
+		ResourceIterator<Node> node_itr = db.findNodes(Labels.ICD10dx, "id", icd10_id);
+		List<Node> nodes = IteratorUtils.toList(node_itr);
+		if(nodes.size()==1) return nodes.get(0);
+		for(Node n : nodes) 	if(n.hasLabel(Labels.Diagnosis)) return n;
+		for(Node n : nodes) 	if(n.hasLabel(Labels.Section)) return n;
+		for(Node n : nodes) 	if(n.hasLabel(Labels.Chapter)) return n;
+		return null;
+	}
+	
 	private static void _icd10_to_ccs(GraphDatabaseService db, String in) throws IOException{
 		final CSVFormat format = CSVFormat.DEFAULT.withFirstRecordAsHeader();
 		try(
@@ -70,7 +81,7 @@ public class ICDtoCCS extends ServerPlugin
 					last_ccs_long_id = ccs_multi;
 					last_ccs = ccs;
 				}
-				Node icd10 = db.findNode(Labels.ICD10dx, "id", icd10_id);
+				Node icd10 = find_icd10(db, icd10_id);
 				if(ccs==null) logger.info("ccs is null");
 				else logger.info("ccs: "+ccs.toString());
 				if(icd10==null) logger.info("icd10 is null");
