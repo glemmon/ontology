@@ -37,14 +37,30 @@ public class ICDtoCCS extends ServerPlugin
 		return false;
 	}
 
-	private static Node find_icd10(GraphDatabaseService db, String icd10_id){
-		ResourceIterator<Node> node_itr = db.findNodes(Labels.ICD10dx, "id", icd10_id);
+	private static Node find_icd10(GraphDatabaseService db, String icd10_id, String name){
+		String corrected_id;
+		String section_id=null;
+		if( icd10_id.length() > 3){
+			char[] icd10_chrs = icd10_id.toCharArray();
+			int index = 3;
+			section_id = new String(icd10_chrs, 0, index);
+			String diag = new String(icd10_chrs, index, icd10_chrs.length - index);
+			corrected_id = section_id+'.'+diag;
+		}else corrected_id = icd10_id;
+		
+		ResourceIterator<Node> node_itr = db.findNodes(Labels.ICD10dx, "id", corrected_id);
 		List<Node> nodes = IteratorUtils.toList(node_itr);
 		if(nodes.size()==1) return nodes.get(0);
 		for(Node n : nodes) 	if(n.hasLabel(Labels.Diagnosis)) return n;
 		for(Node n : nodes) 	if(n.hasLabel(Labels.Section)) return n;
 		for(Node n : nodes) 	if(n.hasLabel(Labels.Chapter)) return n;
-		return null;
+		if( icd10_id.length() <= 3 ) return null;// Can't create chapters and sections here
+		Node n = db.createNode(Labels.ICD10dx, Labels.Diagnosis);
+		n.setProperty("id", corrected_id);
+		n.setProperty("name", name);
+		Node section = db.findNode(Labels.ICD10dx, "id", section_id);
+		n.createRelationshipTo(section, RelTypes.is_a);
+		return n;
 	}
 	
 	private static void _icd10_to_ccs(GraphDatabaseService db, String in) throws IOException{
@@ -61,18 +77,12 @@ public class ICDtoCCS extends ServerPlugin
 				logger.info("r_map: "+r_map.toString());
 				String icd10_id = r_map.get("'ICD-10-CM CODE'");
 				icd10_id = icd10_id.replaceAll("'","");
-				if( icd10_id.length() > 3){
-					char[] icd10_chrs = icd10_id.toCharArray();
-					int index = 3;
-					String part1 = new String(icd10_chrs, 0, index);
-					String part2 = new String(icd10_chrs, index, icd10_chrs.length - index);
-					icd10_id = part1+'.'+part2;
-				}
+				String icd_name = r_map.get("'ICD-10-CM CODE DESCRIPTION'");
+				icd_name = icd_name.replaceAll("'","");
 				String ccs_single = r_map.get("'CCS CATEGORY'");
 				ccs_single = ccs_single.replaceAll("'","");
 				String ccs_multi = r_map.get("'MULTI CCS LVL 2'");
 				ccs_multi = ccs_multi.replaceAll("'","");
-				logger.info("icd10_id: "+icd10_id+", ccs_id: "+ccs_multi);
 				Node ccs;
 				if(ccs_multi.equals(last_ccs_long_id)){
 					ccs = last_ccs;
@@ -81,7 +91,7 @@ public class ICDtoCCS extends ServerPlugin
 					last_ccs_long_id = ccs_multi;
 					last_ccs = ccs;
 				}
-				Node icd10 = find_icd10(db, icd10_id);
+				Node icd10 = find_icd10(db, icd10_id, icd_name);
 				if(ccs==null) logger.info("ccs is null");
 				else logger.info("ccs: "+ccs.toString());
 				if(icd10==null) logger.info("icd10 is null");
