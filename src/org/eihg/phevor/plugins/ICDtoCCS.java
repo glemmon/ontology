@@ -13,12 +13,13 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.eihg.phevor.utility.GraphConvenience.Labels;
 import org.eihg.phevor.utility.GraphConvenience.RelTypes;
-import org.eihg.phevor.utility.Utility;
+//import org.eihg.phevor.utility.Utility;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
 import org.neo4j.server.plugins.PluginTarget;
@@ -64,6 +65,10 @@ public class ICDtoCCS extends ServerPlugin
 		return n;
 	}
 	
+	private static String get_sans_quotes(Map<String,String> m, String k){
+		return m.get(k).replaceAll("'","");
+	}
+	
 	private static void _icd10_to_ccs(GraphDatabaseService db, String in) throws IOException{
 		final CSVFormat format = CSVFormat.DEFAULT.withFirstRecordAsHeader();
 		try(
@@ -73,17 +78,14 @@ public class ICDtoCCS extends ServerPlugin
 			String last_ccs_long_id = null;
 			Node last_ccs = null;
 			for (CSVRecord record : records) {
+				Transaction tx = db.beginTx();
 				logger.info("record: "+record.toString());
 				Map<String,String> r_map = record.toMap();
 				logger.info("r_map: "+r_map.toString());
-				String icd10_id = r_map.get("'ICD-10-CM CODE'");
-				icd10_id = icd10_id.replaceAll("'","");
-				String icd_name = r_map.get("'ICD-10-CM CODE DESCRIPTION'");
-				icd_name = icd_name.replaceAll("'","");
-				String ccs_single = r_map.get("'CCS CATEGORY'");
-				ccs_single = ccs_single.replaceAll("'","");
-				String ccs_multi = r_map.get("'MULTI CCS LVL 2'");
-				ccs_multi = ccs_multi.replaceAll("'","");
+				String icd10_id = get_sans_quotes(r_map, "'ICD-10-CM CODE'");
+				String icd_name = get_sans_quotes(r_map, "'ICD-10-CM CODE DESCRIPTION'");
+				String ccs_single = get_sans_quotes(r_map, "'CCS CATEGORY'");
+				String ccs_multi = get_sans_quotes(r_map,"'MULTI CCS LVL 2'");
 				Node ccs;
 				if(ccs_multi.equals(last_ccs_long_id)){
 					ccs = last_ccs;
@@ -108,6 +110,8 @@ public class ICDtoCCS extends ServerPlugin
 				//if(! has_rel(ccs, icd10)); // For speed we make sure all ICD10-CCS rels are removed
 				Relationship r = icd10.createRelationshipTo(ccs, RelTypes.is_a);
 				logger.info("R: "+r.toString());
+				tx.success();
+				tx.close();
 			}
 		}
 	}
@@ -119,10 +123,10 @@ public class ICDtoCCS extends ServerPlugin
 			@Description( "Input File" )
 			@Parameter( name = "in_file" ) String in
 	) throws IOException{       
-		try(Utility u = Utility.graph_util(db)){
-			logger.info("In: "+in);
-			_icd10_to_ccs(db, in);
-			return "complete";
-		}
+		//try(Utility u = Utility.graph_util(db)){
+		logger.info("In: "+in);
+		_icd10_to_ccs(db, in);
+		return "complete";
+		//}
 	}
 }
