@@ -4,6 +4,7 @@ package org.eihg.phevor.plugins;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -19,6 +20,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.helpers.collection.FilteringIterator;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
 import org.neo4j.server.plugins.PluginTarget;
@@ -36,7 +38,7 @@ public class ICDtoCCS extends ServerPlugin
 //		}
 //		return false;
 //	}
-
+	
 	private static Node find_icd10(GraphDatabaseService db, String icd10_id, String name){
 		String corrected_id;
 		String section_id=null;
@@ -59,8 +61,13 @@ public class ICDtoCCS extends ServerPlugin
 		Node n = db.createNode(Labels.ICD10dx, Labels.Diagnosis);
 		n.setProperty("id", corrected_id);
 		n.setProperty("name", name);
-		Node section = db.findNode(Labels.ICD10dx, "id", section_id);
-		n.createRelationshipTo(section, RelTypes.is_a);
+		Iterator<Node> section_itr = new FilteringIterator<>(
+				db.findNodes(Labels.ICD10dx, "id", section_id),
+				node->node.hasLabel(Labels.Section)
+		);
+		List<Node> sections = IteratorUtils.toList(section_itr);
+		assert(sections.size()==1);
+		n.createRelationshipTo(sections.get(0), RelTypes.is_a);
 		return n;
 	}
 	
