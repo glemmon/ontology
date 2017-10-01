@@ -77,7 +77,7 @@ public class ICDtoCCS extends ServerPlugin
 	}
 	
 	private static String get_sans_quotes(Map<String,String> m, String k){
-		return m.get(k).replaceAll("'","");
+		return m.get(k).replaceAll("'","").trim();
 	}
 	
 	private static void _icd10_to_ccs(GraphDatabaseService db, String in) throws IOException{
@@ -95,6 +95,7 @@ public class ICDtoCCS extends ServerPlugin
 				String icd_name = get_sans_quotes(r_map, "'ICD-10-CM CODE DESCRIPTION'");
 				String ccs_single = get_sans_quotes(r_map, "'CCS CATEGORY'");
 				String ccs_multi = get_sans_quotes(r_map,"'MULTI CCS LVL 2'");
+				if(ccs_multi.isEmpty()) ccs_multi = get_sans_quotes(r_map,"'MULTI CCS LVL 1'");
 				Node ccs;
 				if(ccs_multi.equals(last_ccs_long_id)){
 					ccs = last_ccs;
