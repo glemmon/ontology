@@ -17,7 +17,6 @@ import org.eihg.phevor.utility.GraphConvenience.RelTypes;
 //import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.collection.FilteringIterator;
@@ -46,7 +45,8 @@ public class ICDtoCCS extends ServerPlugin
 			char[] icd10_chrs = icd10_id.toCharArray();
 			int index = 3;
 			section_id = new String(icd10_chrs, 0, index);
-			String diag = new String(icd10_chrs, index, icd10_chrs.length - index);
+			int diag_length = Math.max(icd10_chrs.length - index, 3);
+			String diag = new String(icd10_chrs, index, diag_length);
 			corrected_id = section_id+'.'+diag;
 		}else corrected_id = icd10_id;
 		
@@ -57,7 +57,7 @@ public class ICDtoCCS extends ServerPlugin
 		for(Node n : nodes) 	if(n.hasLabel(Labels.Diagnosis)) return n;
 		for(Node n : nodes) 	if(n.hasLabel(Labels.Section)) return n;
 		for(Node n : nodes) 	if(n.hasLabel(Labels.Chapter)) return n;
-		if( icd10_id.length() <= 3 ) return null;// Can't create chapters and sections here
+		if( corrected_id.length() <= 3 ) return null;// Can't create chapters and sections here
 		Node n = db.createNode(Labels.ICD10dx, Labels.Diagnosis);
 		n.setProperty("id", corrected_id);
 		n.setProperty("name", name);
@@ -66,7 +66,7 @@ public class ICDtoCCS extends ServerPlugin
 				node->node.hasLabel(Labels.Section)
 		);
 		List<Node> sections = IteratorUtils.toList(section_itr);
-		assert(sections.size()==1);
+		if(sections.size()!=1) throw new RuntimeException("multi-sectid: "+section_id);
 		n.createRelationshipTo(sections.get(0), RelTypes.is_a);
 		return n;
 	}
