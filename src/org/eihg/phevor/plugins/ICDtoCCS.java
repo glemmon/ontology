@@ -45,7 +45,7 @@ public class ICDtoCCS extends ServerPlugin
 			char[] icd10_chrs = icd10_id.toCharArray();
 			int index = 3;
 			section_id = new String(icd10_chrs, 0, index);
-			int diag_length = Math.max(icd10_chrs.length - index, 3);
+			int diag_length = Math.min(icd10_chrs.length - index, 3);
 			String diag = new String(icd10_chrs, index, diag_length);
 			corrected_id = section_id+'.'+diag;
 		}else corrected_id = icd10_id;
