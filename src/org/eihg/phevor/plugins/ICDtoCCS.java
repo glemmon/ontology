@@ -38,6 +38,16 @@ public class ICDtoCCS extends ServerPlugin
 //		return false;
 //	}
 	
+	private static Node lowest(ResourceIterator<Node> node_itr){
+		List<Node> nodes = IteratorUtils.toList(node_itr);
+		node_itr.close();
+		if(nodes.size()==1) return nodes.get(0);
+		for(Node n : nodes) 	if(n.hasLabel(Labels.Diagnosis)) return n;
+		for(Node n : nodes) 	if(n.hasLabel(Labels.Section)) return n;
+		for(Node n : nodes) 	if(n.hasLabel(Labels.Chapter)) return n;
+		return null;
+	}
+	
 	private static Node find_icd10(GraphDatabaseService db, String icd10_id, String name){
 		String corrected_id;
 		String section_id=null;
@@ -51,23 +61,18 @@ public class ICDtoCCS extends ServerPlugin
 		}else corrected_id = icd10_id;
 		
 		ResourceIterator<Node> node_itr = db.findNodes(Labels.ICD10dx, "id", corrected_id);
-		List<Node> nodes = IteratorUtils.toList(node_itr);
-		node_itr.close();
-		if(nodes.size()==1) return nodes.get(0);
-		for(Node n : nodes) 	if(n.hasLabel(Labels.Diagnosis)) return n;
-		for(Node n : nodes) 	if(n.hasLabel(Labels.Section)) return n;
-		for(Node n : nodes) 	if(n.hasLabel(Labels.Chapter)) return n;
-		if( corrected_id.length() <= 3 ) return null;// Can't create chapters and sections here
+		Node icd10 = lowest(node_itr);
+		if( icd10 != null) return icd10;
+		if( corrected_id.length() <= 3 ){
+			throw new RuntimeException("corrected_id: "+corrected_id);// Can't create chapters and sections here
+		}
 		Node n = db.createNode(Labels.ICD10dx, Labels.Diagnosis);
 		n.setProperty("id", corrected_id);
 		n.setProperty("name", name);
-		Iterator<Node> section_itr = new FilteringIterator<>(
-				db.findNodes(Labels.ICD10dx, "id", section_id),
-				node->node.hasLabel(Labels.Section)
-		);
-		List<Node> sections = IteratorUtils.toList(section_itr);
-		if(sections.size()!=1) throw new RuntimeException("multi-sectid: "+section_id);
-		n.createRelationshipTo(sections.get(0), RelTypes.is_a);
+		ResourceIterator<Node> parent_itr = db.findNodes(Labels.ICD10dx, "id", section_id);
+		Node parent = lowest(parent_itr);
+		if(parent == null) throw new RuntimeException("parent: "+section_id);
+		n.createRelationshipTo(parent, RelTypes.is_a);
 		return n;
 	}
 	
