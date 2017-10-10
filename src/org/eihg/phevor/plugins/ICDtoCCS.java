@@ -115,7 +115,8 @@ public class ICDtoCCS extends ServerPlugin
 				//last_ccs_long_id = ccs_multi;
 				//last_ccs = ccs;
 				//if(! has_rel(ccs, icd10)); // For speed we make sure all ICD10-CCS rels are removed
-				if(! has_rel(ccs, icd10));
+				if(ccs==null) continue;
+				if(has_rel(ccs, icd10)) continue;
 				icd10.createRelationshipTo(ccs, RelTypes.is_a);
 				++i;
 				if(i==99){// batches of 100
