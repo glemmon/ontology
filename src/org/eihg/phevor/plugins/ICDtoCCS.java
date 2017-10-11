@@ -77,12 +77,17 @@ public class ICDtoCCS extends ServerPlugin
 	}
 	
 	private static Node find_ccs(GraphDatabaseService db, String short_id, String name){
-		Node ccs = db.findNode(Labels.CCSdx, "short_id", short_id);
-		if(ccs == null) return ccs;
-		if(! ccs.hasProperty("name") ){
-				ccs.setProperty("name", name);
+		try{
+			int short_int = Integer.parseInt(short_id);
+			Node ccs = db.findNode(Labels.CCSdx, "short_id", short_int);
+			if(ccs == null) return ccs;
+			if(! ccs.hasProperty("name") ){
+					ccs.setProperty("name", name);
+			}
+			return ccs;
+		}catch( NumberFormatException e){
+			return null;
 		}
-		return ccs;
 	}
 	
 	private static String get_sans_quotes(Map<String,String> m, String k){
