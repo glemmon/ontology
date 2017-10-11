@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
 import java.util.Map;
-//import java.util.logging.Logger;
+import java.util.logging.Logger;
 
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.csv.CSVFormat;
@@ -28,7 +28,7 @@ import org.neo4j.server.plugins.Source;
 
 public class ICDtoCCS extends ServerPlugin
 {	
-	//private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
+	private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
 
 	private static boolean has_rel(Node ccs, Node icd10){
 		for( Relationship r : icd10.getRelationships(Direction.OUTGOING, RelTypes.is_a)){
@@ -80,12 +80,16 @@ public class ICDtoCCS extends ServerPlugin
 		try{
 			int short_int = Integer.parseInt(short_id);
 			Node ccs = db.findNode(Labels.CCSdx, "short_id", short_int);
-			if(ccs == null) return ccs;
+			if(ccs == null){
+				logger.info("can't find "+short_id);
+				return ccs;
+			}
 			if(! ccs.hasProperty("name") ){
 					ccs.setProperty("name", name);
 			}
 			return ccs;
-		}catch( NumberFormatException e){
+		}catch( NumberFormatException e ){
+			logger.info("short_id: "+short_id);
 			return null;
 		}
 	}
@@ -120,8 +124,14 @@ public class ICDtoCCS extends ServerPlugin
 				//last_ccs_long_id = ccs_multi;
 				//last_ccs = ccs;
 				//if(! has_rel(ccs, icd10)); // For speed we make sure all ICD10-CCS rels are removed
-				if(ccs==null) continue;
-				if(has_rel(ccs, icd10)) continue;
+				if(ccs==null){
+					logger.info("ccs is null: "+ccs_single);
+					continue;
+				}
+				if(has_rel(ccs, icd10)) {
+					logger.info("already has rel "+icd10_id+"->"+ccs_single);
+					continue;
+				}
 				icd10.createRelationshipTo(ccs, RelTypes.is_a);
 				++i;
 				if(i==99){// batches of 100
