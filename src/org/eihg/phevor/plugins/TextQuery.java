@@ -2,7 +2,6 @@
 package org.eihg.phevor.plugins;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.*;
 
@@ -10,7 +9,6 @@ import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eihg.phevor.utility.GraphConvenience;
 import org.eihg.phevor.utility.Utility;
 import org.neo4j.graphalgo.GraphAlgoFactory;
@@ -21,7 +19,6 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
-import org.neo4j.helpers.collection.Iterators;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
 import org.neo4j.server.plugins.PluginTarget;
@@ -40,12 +37,11 @@ public class TextQuery extends ServerPlugin
 		logger.setLevel(Level.ALL);
 	}
 
-	private static Iterable<Node> find_matching_nodes(String query, boolean hp_only){
+	private static ResourceIterator<Node> find_matching_nodes(String query, boolean hp_only){
 		String label = hp_only ? ":HP" : "";
 		String cypher = "MATCH (n"+label+") WHERE n.full_name =~ '"+ query +"' RETURN n";
 		Result result = Utility.graph_util().get_graph().execute( cypher );
-		Iterator<Node> n_column = result.columnAs( "n" );
-		return Iterators.asIterable( n_column );
+		return result.columnAs( "n" );
 	}
 
 	private static Node find_root(Label label){
@@ -105,7 +101,7 @@ public class TextQuery extends ServerPlugin
 	private static JsonArrayBuilder collect_paths(String query, boolean hp_only){
 		JsonArrayBuilder array_builder = Json.createArrayBuilder();
 
-		for( Node result : find_matching_nodes(query, hp_only)){
+		find_matching_nodes(query, hp_only).forEachRemaining(result->{
 			Label label = get_onto_label(result);
 			Node root = find_root(label);
 			//TODO traverser framework to collect nodes faster than shortest path?
@@ -114,7 +110,7 @@ public class TextQuery extends ServerPlugin
 			for ( Path path : shortestPath.findAllPaths( result, root ) ){ // Wrong direction but this should be faster since its a tree
 				array_builder.add(path_to_json(path,label));
 			}
-		}
+		});
 		return array_builder;
 	}
 
@@ -122,10 +118,10 @@ public class TextQuery extends ServerPlugin
 	private static JsonArrayBuilder collect_nodes(String query, boolean hp_only){
 		JsonArrayBuilder array_builder = Json.createArrayBuilder();
 
-		for( Node result : find_matching_nodes(query, hp_only)){
+		find_matching_nodes(query, hp_only).forEachRemaining(result->{
 			Label label = get_onto_label(result);
 			array_builder.add(node_to_json(result,label));
-		}
+		});
 		return array_builder;
 	}
 
