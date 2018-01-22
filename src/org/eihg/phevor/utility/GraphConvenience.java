@@ -35,6 +35,7 @@ public class GraphConvenience {
 		ICD9dx,
 		ICD10dx,
 		ROOT, 
+		RX,
 		CCSdx,
 		CCSpx, 
 		Diagnosis,
