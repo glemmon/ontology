@@ -26,25 +26,25 @@ import org.neo4j.server.plugins.Source;
 public class RXparser extends ServerPlugin
 {	
 	private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
-	//For now keep all codes as strings
-	//private static Object get_code(String code_str){
-	//	try{
-	//		return Integer.parseInt(code_str);
-	//	}catch(NumberFormatException e){}
-	//	try{
-	//		return Long.parseLong(code_str);
-	//	}catch(NumberFormatException e){
-	//		return code_str;
-	//	}
-	//}
 	
-	private static Node create_rx(GraphDatabaseService db, int level, String code, String name, int type_code, String type){
+	private static Object get_code(String code_str){
+		try{
+			return Integer.parseInt(code_str);
+		}catch(NumberFormatException e){}
+		try{
+			return Long.parseLong(code_str);
+		}catch(NumberFormatException e){
+			return code_str;
+		}
+	}
+	
+	private static Node create_rx(GraphDatabaseService db, int level, String code, String name, Integer type_code, String type){
 		Node n = db.createNode(Labels.RX);
 		n.setProperty("level", level);
 		n.setProperty("id", code);
 		n.setProperty("name", name);
-		n.setProperty("type_code", type_code);
-		n.setProperty("type", type);
+		if(type_code != null) n.setProperty("type_code", type_code);
+		if(! type.isEmpty()) n.setProperty("type", type);
 		return n;
 	}
 	
@@ -56,17 +56,13 @@ public class RXparser extends ServerPlugin
 		item = db.createNode(Labels.RX);
 		item.setProperty("dwid", dwid);
 		String id_str = r.get("ITEM_CODE");
-		try{
-			int id = Integer.parseInt(id_str);
-			item.setProperty("id", id);
-		}catch(NumberFormatException e){
-			item.setProperty("id", id_str);
-		}
+		Object id = get_code(id_str);
+		item.setProperty("id", id);
 		item.setProperty("name", r.get("ITEM"));
 		return Pair.of(item,true);
 	}
 	
-	private static Node find_catalog(GraphDatabaseService db, int level, String code){
+	private static Node find_catalog(GraphDatabaseService db, int level, Object code){
 		ResourceIterator<Node> nodes = db.findNodes(Labels.RX, "id", code);
 		while(nodes.hasNext()){
 			Node n = nodes.next();
@@ -78,15 +74,16 @@ public class RXparser extends ServerPlugin
 		return null;
 	}
 	
-	private static Node get_catalog(GraphDatabaseService db, CSVRecord r, int level, int type_code, String type){
+	private static Node get_catalog(GraphDatabaseService db, CSVRecord r, int level, Integer type_code, String type){
 		String level_str = Integer.toString(level);
 		String name_label = "CATALOG";
 		if(level<5) name_label += "_HIER"+level_str;
 		String code_label = name_label+"_CODE";
 		String code_str = r.get(code_label);
 		if(code_str.isEmpty()) return null;
+		Object code = get_code(code_str);
 		//Object child_code = get_code(code_str);
-		Node found = find_catalog(db, level, code_str);
+		Node found = find_catalog(db, level, code);
 		if(found != null) return found;
 		String name = r.get(name_label);
 		found = create_rx(db, level, code_str, name, type_code, type);
@@ -96,7 +93,7 @@ public class RXparser extends ServerPlugin
 	// Item connected, continue
 	private static Pair<Boolean,Boolean> _parse_record(GraphDatabaseService db, CSVRecord r, Node root, Node item, int child_level){
 		String type_code_str = r.get("CATALOG_TYPE_CODE");
-		int type_code = Integer.parseInt(type_code_str);
+		Integer type_code = type_code_str.isEmpty() ? null : Integer.parseInt(type_code_str);
 		String type = r.get("CATALOG_TYPE");
 		Node child = get_catalog(db, r, child_level, type_code, type);
 		if(child==null) return Pair.of(false, true);
