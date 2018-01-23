@@ -38,7 +38,7 @@ public class RXparser extends ServerPlugin
 		}
 	}
 	
-	private static Node create_rx(GraphDatabaseService db, int level, String code, String name, Integer type_code, String type){
+	private static Node create_rx(GraphDatabaseService db, int level, Object code, String name, Integer type_code, String type){
 		Node n = db.createNode(Labels.RX);
 		n.setProperty("level", level);
 		n.setProperty("id", code);
@@ -86,8 +86,7 @@ public class RXparser extends ServerPlugin
 		Node found = find_catalog(db, level, code);
 		if(found != null) return found;
 		String name = r.get(name_label);
-		found = create_rx(db, level, code_str, name, type_code, type);
-		return found;
+		return create_rx(db, level, code, name, type_code, type);
 	}
 	
 	// Item connected, continue
