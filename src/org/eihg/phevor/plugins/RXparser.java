@@ -101,29 +101,30 @@ public class RXparser extends ServerPlugin
 			item_connected = true;
 		}
 		if(!created) return Pair.of(item_connected, false);
+		//return Pair.of(false,false);
 		if( child_level == 1){
 			child.createRelationshipTo(root, RelTypes.is_a);
 			return Pair.of(item_connected, false);
 		}
 		int parent_level=child_level-1;
 		Pair<Node, Boolean> parent_created = get_catalog(db, r, parent_level, type_code, type);
-		if(parent_created==null) assert false; // Child cannot exist without parent
+		if(parent_created == null) throw new AssertionError("parent cannot be null if child is not null");
 		Node parent = parent_created.getLeft();
-		child.createRelationshipTo(parent, RelTypes.is_a);
+		//child.createRelationshipTo(parent, RelTypes.is_a);
 		return Pair.of(item_connected, true);
 	}
 	private static void parse_record(GraphDatabaseService db, CSVRecord r, Node root){
 		Pair<Node,Boolean> item_created = get_item(db, r);
-		assert(item_created != null);
+		if(item_created == null) throw new AssertionError("item_created shouldn't be null");
 		if(!item_created.getRight()) return; // Already processed
 		Node item = item_created.getLeft();
 		for(int child_level=5; child_level>1; --child_level){
 			Pair<Boolean, Boolean> itemconnected_continue = _parse_record(db, r, root, item, child_level);
-			assert(itemconnected_continue != null);
+			if(itemconnected_continue == null) throw new AssertionError("test1");
 			boolean stop = ! itemconnected_continue.getRight();
 			if(stop) break;
 			boolean item_connected = itemconnected_continue.getLeft();
-			if(item_connected) item = null;
+			if(item != null && item_connected) item = null;
 		}
 	}
 	
@@ -136,16 +137,16 @@ public class RXparser extends ServerPlugin
 			int i = 0;
 			Transaction tx = db.beginTx();
 			final Node root = db.findNode(Labels.RX, "id", 0);
-			assert(root != null);
+			if(root == null) throw new AssertionError("root test");
 			for (CSVRecord record : records) {
 				parse_record(db, record, root);
 				++i;
-				if(i==99){// batches of 100
-					i=0;
+				//if(i==99){// batches of 100
+					//i=0;
 					tx.success();
 					tx.close();
 					tx = db.beginTx();
-				}
+				//}
 				logger.info(Integer.toString(i)+" "+record.get("ITEM_DWID"));
 			}
 			
