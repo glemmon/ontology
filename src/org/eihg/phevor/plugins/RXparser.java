@@ -13,14 +13,13 @@ import org.eihg.phevor.utility.GraphConvenience.Labels;
 import org.eihg.phevor.utility.GraphConvenience.RelTypes;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
 import org.neo4j.server.plugins.PluginTarget;
 import org.neo4j.server.plugins.ServerPlugin;
 import org.neo4j.server.plugins.Source;
-
-// Caution - this class assumes the only RX node in Neo4j is the root node with id 0
 
 public class RXparser extends ServerPlugin
 {	
@@ -31,25 +30,61 @@ public class RXparser extends ServerPlugin
 				: Integer.parseInt(code_str);
 	}
 	
-	private static Node create_rx(GraphDatabaseService db, Number child_code, String child_name, String type){
+	private static Node create_rx(GraphDatabaseService db, int level, Number code, String name, String type){
 		Node n = db.createNode(Labels.RX);
-		n.setProperty("id", child_code);
-		n.setProperty("name", child_name);
+		n.setProperty("level", level);
+		n.setProperty("id", code);
+		n.setProperty("name", name);
 		n.setProperty("type", type);
 		return n;
 	}
 	
-	private static void _parse_record(GraphDatabaseService db, CSVRecord r, Node root, int child_level){
+	private static Node get_item(GraphDatabaseService db, CSVRecord r){
+		String dwid_str = r.get("ITEM_DWID");
+		int dwid = Integer.parseInt(dwid_str);
+		Node item = db.findNode(Labels.RX, "dwid", dwid);
+		if(item!=null) return item;
+		item = db.createNode(Labels.RX);
+		String id_str = r.get("ITEM_CODE");
+		try{
+			int id = Integer.parseInt(id_str);
+			item.setProperty("id", id);
+		}catch(NumberFormatException e){}
+		item.setProperty("name", r.get("ITEM"));
+		return item;
+	}
+	
+	private static Node find_catalog(GraphDatabaseService db, int level, Number code){
+		ResourceIterator<Node> nodes = db.findNodes(Labels.RX, "id", code);
+		while(nodes.hasNext()){
+			Node n = nodes.next();
+			int other_level = (int)n.getProperty("level", 0);
+			if( other_level == level ){
+				return n;
+			}
+		}
+		return null;
+	}
+	
+	private static boolean _parse_record(GraphDatabaseService db, CSVRecord r, Node root, Node item, int child_level){
 		String type = r.get("CATALOG_TYPE_CODE");
 		String child_level_str = Integer.toString(child_level);
 		String child_name_label = "CATALOG";
 		if(child_level<5) child_name_label += "_HIER"+child_level_str;
 		String child_code_label = child_name_label+"_CODE";
 		String child_code_str = r.get(child_code_label);
-		if(child_code_str.isEmpty()) return;
+		if(child_code_str.isEmpty()) return false;
 		Number child_code = get_code(child_code_str, child_level);
+		Node child = find_catalog(db, child_level, child_code);
 		String child_name = r.get(child_name_label);
-		Node child = create_rx(db, child_code, child_name, type);
+		if(child == null){
+			child = create_rx(db, child_level, child_code, child_name, type);
+		}
+		boolean item_connected = false;
+		if(item != null){
+			item.createRelationshipTo(child, RelTypes.is_a);
+			item_connected = true;
+		}
 		int parent_level=child_level-1;
 		String parent_level_str = Integer.toString(parent_level);
 		String parent_name_label = "CATALOG_HIER"+parent_level_str;
@@ -57,21 +92,22 @@ public class RXparser extends ServerPlugin
 		String parent_code_str = r.get(parent_code_label);
 		if(parent_code_str.isEmpty()){
 			child.createRelationshipTo(root, RelTypes.is_a);
-			return;
+			return item_connected;
 		}
 		Number parent_code = get_code(parent_code_str, parent_level);
-		Node parent = db.findNode(Labels.RX, "id", parent_code);
+		Node parent = find_catalog(db, parent_level, parent_code);
 		String parent_name = r.get(parent_name_label);
-		if(parent != null){
-			child.createRelationshipTo(parent, RelTypes.is_a);
-			return;
+		if(parent == null){
+			parent = create_rx(db, parent_level, parent_code, parent_name, type);
 		}
-		parent = create_rx(db, parent_code, parent_name, type);
 		child.createRelationshipTo(parent, RelTypes.is_a);
+		return item_connected;
 	}
 	private static void parse_record(GraphDatabaseService db, CSVRecord r, Node root){
+		Node item = get_item(db, r);
 		for(int child_level=5; child_level>1; ++child_level){
-			_parse_record(db, r, root, child_level);
+			boolean item_connected = _parse_record(db, r, root, item, child_level);
+			if( item_connected ) item = null;
 		}
 	}
 	
