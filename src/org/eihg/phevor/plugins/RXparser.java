@@ -101,7 +101,6 @@ public class RXparser extends ServerPlugin
 			item_connected = true;
 		}
 		if(!created) return Pair.of(item_connected, false);
-		//return Pair.of(false,false);
 		if( child_level == 1){
 			child.createRelationshipTo(root, RelTypes.is_a);
 			return Pair.of(item_connected, false);
@@ -113,7 +112,7 @@ public class RXparser extends ServerPlugin
 			return Pair.of(item_connected, false);
 		}
 		Node parent = parent_created.getLeft();
-		//child.createRelationshipTo(parent, RelTypes.is_a);
+		child.createRelationshipTo(parent, RelTypes.is_a);
 		return Pair.of(item_connected, true);
 	}
 	private static void parse_record(GraphDatabaseService db, CSVRecord r, Node root){
