@@ -46,11 +46,14 @@ public class RXparser extends ServerPlugin
 		Node item = db.findNode(Labels.RX, "dwid", dwid);
 		if(item!=null) return item;
 		item = db.createNode(Labels.RX);
+		item.setProperty("dwid", dwid);
 		String id_str = r.get("ITEM_CODE");
 		try{
 			int id = Integer.parseInt(id_str);
 			item.setProperty("id", id);
-		}catch(NumberFormatException e){}
+		}catch(NumberFormatException e){
+			item.setProperty("id", id_str);
+		}
 		item.setProperty("name", r.get("ITEM"));
 		return item;
 	}
