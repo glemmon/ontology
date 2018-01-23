@@ -12,8 +12,10 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eihg.phevor.utility.GraphConvenience.Labels;
 import org.eihg.phevor.utility.GraphConvenience.RelTypes;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.server.plugins.Description;
@@ -71,7 +73,7 @@ public class RXparser extends ServerPlugin
 		return null;
 	}
 	
-	private static Pair<Node,Boolean> get_catalog(GraphDatabaseService db, CSVRecord r, int level, int type_code, String type){
+	private static Node get_catalog(GraphDatabaseService db, CSVRecord r, int level, int type_code, String type){
 		String level_str = Integer.toString(level);
 		String name_label = "CATALOG";
 		if(level<5) name_label += "_HIER"+level_str;
@@ -80,10 +82,10 @@ public class RXparser extends ServerPlugin
 		if(code_str.isEmpty()) return null;
 		Number child_code = get_code(code_str, level);
 		Node child = find_catalog(db, level, child_code);
-		if(child != null) return Pair.of(child, false);
+		if(child != null) return child;
 		String child_name = r.get(name_label);
 		child = create_rx(db, level, child_code, child_name, type_code, type);
-		return Pair.of(child, true);
+		return child;
 	}
 	
 	// Item connected, continue
@@ -91,9 +93,8 @@ public class RXparser extends ServerPlugin
 		String type_code_str = r.get("CATALOG_TYPE_CODE");
 		int type_code = Integer.parseInt(type_code_str);
 		String type = r.get("CATALOG_TYPE");
-		Pair<Node, Boolean> child_created = get_catalog(db, r, child_level, type_code, type);
-		if(child_created==null) return Pair.of(false, true);
-		Node child = child_created.getLeft();
+		Node child = get_catalog(db, r, child_level, type_code, type);
+		if(child==null) return Pair.of(false, true);
 		boolean item_connected = false;
 		if(item != null){
 			item.createRelationshipTo(child, RelTypes.is_a);
@@ -104,16 +105,15 @@ public class RXparser extends ServerPlugin
 			return Pair.of(item_connected, false);
 		}
 		int parent_level=child_level-1;
-		Pair<Node, Boolean> parent_created = get_catalog(db, r, parent_level, type_code, type);
-		if(parent_created == null){
+		Node parent = get_catalog(db, r, parent_level, type_code, type);
+		if(parent == null){
 			child.createRelationshipTo(root, RelTypes.is_a);
 			return Pair.of(item_connected, false);
 		}
 		
-		if(!parent_created.getRight() && !child_created.getRight()) 
-			return Pair.of(item_connected, false);
+		Relationship rel = child.getSingleRelationship(RelTypes.is_a, Direction.OUTGOING);
+		if( rel.getEndNode().equals(parent) ) return Pair.of(item_connected, false);
 
-		Node parent = parent_created.getLeft();
 		child.createRelationshipTo(parent, RelTypes.is_a);
 		return Pair.of(item_connected, true);
 	}
