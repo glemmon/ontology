@@ -100,6 +100,10 @@ public class RXparser extends ServerPlugin
 			item.createRelationshipTo(child, RelTypes.is_a);
 			item_connected = true;
 		}
+		if(child.hasRelationship(RelTypes.is_a, Direction.OUTGOING)){
+			// For now, ASSUME children have only 1 parent
+			return Pair.of(item_connected, false);
+		}
 		if( child_level == 1){
 			child.createRelationshipTo(root, RelTypes.is_a);
 			return Pair.of(item_connected, false);
@@ -110,10 +114,6 @@ public class RXparser extends ServerPlugin
 			child.createRelationshipTo(root, RelTypes.is_a);
 			return Pair.of(item_connected, false);
 		}
-		
-		Relationship rel = child.getSingleRelationship(RelTypes.is_a, Direction.OUTGOING);
-		if( rel.getEndNode().equals(parent) ) return Pair.of(item_connected, false);
-
 		child.createRelationshipTo(parent, RelTypes.is_a);
 		return Pair.of(item_connected, true);
 	}
