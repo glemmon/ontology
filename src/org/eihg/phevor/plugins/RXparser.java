@@ -72,13 +72,13 @@ public class RXparser extends ServerPlugin
 	
 	private static void _parse_rx(GraphDatabaseService db, String in) throws IOException{
 		final CSVFormat format = CSVFormat.TDF.withFirstRecordAsHeader();
-		final Node root = db.findNode(Labels.RX, "id", 0);
 		try(
 				final Reader reader = new FileReader(in);
 		){
 			final Iterable<CSVRecord> records = format.parse(reader);
 			int i = 0;
 			Transaction tx = db.beginTx();
+			final Node root = db.findNode(Labels.RX, "id", 0);
 			for (CSVRecord record : records) {
 				parse_record(db, record, root);
 				++i;
