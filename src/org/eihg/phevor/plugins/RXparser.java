@@ -30,11 +30,12 @@ public class RXparser extends ServerPlugin
 				: Integer.parseInt(code_str);
 	}
 	
-	private static Node create_rx(GraphDatabaseService db, int level, Number code, String name, String type){
+	private static Node create_rx(GraphDatabaseService db, int level, Number code, String name, int type_code, String type){
 		Node n = db.createNode(Labels.RX);
 		n.setProperty("level", level);
 		n.setProperty("id", code);
 		n.setProperty("name", name);
+		n.setProperty("type_code", type_code);
 		n.setProperty("type", type);
 		return n;
 	}
@@ -67,7 +68,9 @@ public class RXparser extends ServerPlugin
 	}
 	
 	private static boolean _parse_record(GraphDatabaseService db, CSVRecord r, Node root, Node item, int child_level){
-		String type = r.get("CATALOG_TYPE_CODE");
+		String type_code_str = r.get("CATALOG_TYPE_CODE");
+		int type_code = Integer.parseInt(type_code_str);
+		String type = r.get("CATALOG_TYPE");
 		String child_level_str = Integer.toString(child_level);
 		String child_name_label = "CATALOG";
 		if(child_level<5) child_name_label += "_HIER"+child_level_str;
@@ -78,7 +81,7 @@ public class RXparser extends ServerPlugin
 		Node child = find_catalog(db, child_level, child_code);
 		String child_name = r.get(child_name_label);
 		if(child == null){
-			child = create_rx(db, child_level, child_code, child_name, type);
+			child = create_rx(db, child_level, child_code, child_name, type_code, type);
 		}
 		boolean item_connected = false;
 		if(item != null){
@@ -98,7 +101,7 @@ public class RXparser extends ServerPlugin
 		Node parent = find_catalog(db, parent_level, parent_code);
 		String parent_name = r.get(parent_name_label);
 		if(parent == null){
-			parent = create_rx(db, parent_level, parent_code, parent_name, type);
+			parent = create_rx(db, parent_level, parent_code, parent_name, type_code, type);
 		}
 		child.createRelationshipTo(parent, RelTypes.is_a);
 		return item_connected;
