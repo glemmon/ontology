@@ -24,7 +24,7 @@ import org.neo4j.server.plugins.Source;
 
 public class RXparser extends ServerPlugin
 {	
-	//private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
+	private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
 	private static Number get_code(String code_str, int level){
 		return level == 4 ?
 				Long.parseLong(code_str)
@@ -71,17 +71,17 @@ public class RXparser extends ServerPlugin
 		return null;
 	}
 	
-	private static Pair<Node,Boolean> get_child(GraphDatabaseService db, CSVRecord r, int level, int type_code, String type){
-		String child_level_str = Integer.toString(level);
-		String child_name_label = "CATALOG";
-		if(level<5) child_name_label += "_HIER"+child_level_str;
-		String child_code_label = child_name_label+"_CODE";
-		String child_code_str = r.get(child_code_label);
-		if(child_code_str.isEmpty()) return null;
-		Number child_code = get_code(child_code_str, level);
+	private static Pair<Node,Boolean> get_catalog(GraphDatabaseService db, CSVRecord r, int level, int type_code, String type){
+		String level_str = Integer.toString(level);
+		String name_label = "CATALOG";
+		if(level<5) name_label += "_HIER"+level_str;
+		String code_label = name_label+"_CODE";
+		String code_str = r.get(code_label);
+		if(code_str.isEmpty()) return null;
+		Number child_code = get_code(code_str, level);
 		Node child = find_catalog(db, level, child_code);
 		if(child != null) return Pair.of(child, false);
-		String child_name = r.get(child_name_label);
+		String child_name = r.get(name_label);
 		child = create_rx(db, level, child_code, child_name, type_code, type);
 		return Pair.of(child, true);
 	}
@@ -91,7 +91,7 @@ public class RXparser extends ServerPlugin
 		String type_code_str = r.get("CATALOG_TYPE_CODE");
 		int type_code = Integer.parseInt(type_code_str);
 		String type = r.get("CATALOG_TYPE");
-		Pair<Node, Boolean> child_created = get_child(db, r, child_level, type_code, type);
+		Pair<Node, Boolean> child_created = get_catalog(db, r, child_level, type_code, type);
 		if(child_created==null) return Pair.of(false, true);
 		Node child = child_created.getLeft();
 		boolean created = child_created.getRight();
@@ -106,7 +106,7 @@ public class RXparser extends ServerPlugin
 			return Pair.of(item_connected, false);
 		}
 		int parent_level=child_level-1;
-		Pair<Node, Boolean> parent_created = get_child(db, r, parent_level, type_code, type);
+		Pair<Node, Boolean> parent_created = get_catalog(db, r, parent_level, type_code, type);
 		if(parent_created==null) assert false; // Child cannot exist without parent
 		Node parent = parent_created.getLeft();
 		child.createRelationshipTo(parent, RelTypes.is_a);
@@ -114,10 +114,12 @@ public class RXparser extends ServerPlugin
 	}
 	private static void parse_record(GraphDatabaseService db, CSVRecord r, Node root){
 		Pair<Node,Boolean> item_created = get_item(db, r);
+		assert(item_created != null);
 		if(!item_created.getRight()) return; // Already processed
 		Node item = item_created.getLeft();
 		for(int child_level=5; child_level>1; --child_level){
 			Pair<Boolean, Boolean> itemconnected_continue = _parse_record(db, r, root, item, child_level);
+			assert(itemconnected_continue != null);
 			boolean stop = ! itemconnected_continue.getRight();
 			if(stop) break;
 			boolean item_connected = itemconnected_continue.getLeft();
@@ -134,6 +136,7 @@ public class RXparser extends ServerPlugin
 			int i = 0;
 			Transaction tx = db.beginTx();
 			final Node root = db.findNode(Labels.RX, "id", 0);
+			assert(root != null);
 			for (CSVRecord record : records) {
 				parse_record(db, record, root);
 				++i;
@@ -143,7 +146,9 @@ public class RXparser extends ServerPlugin
 					tx.close();
 					tx = db.beginTx();
 				}
+				logger.info(Integer.toString(i)+" "+record.get("ITEM_DWID"));
 			}
+			
 			tx.success();
 			tx.close();
 		}
@@ -156,9 +161,7 @@ public class RXparser extends ServerPlugin
 			@Description( "Input File" )
 			@Parameter( name = "in_file" ) String in
 	) throws IOException{       
-		//try(Utility u = Utility.graph_util(db)){
 		_parse_rx(db, in);
 		return "complete";
-		//}
 	}
 }
