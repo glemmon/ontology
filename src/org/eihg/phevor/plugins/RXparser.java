@@ -94,13 +94,11 @@ public class RXparser extends ServerPlugin
 		Pair<Node, Boolean> child_created = get_catalog(db, r, child_level, type_code, type);
 		if(child_created==null) return Pair.of(false, true);
 		Node child = child_created.getLeft();
-		boolean created = child_created.getRight();
 		boolean item_connected = false;
 		if(item != null){
 			item.createRelationshipTo(child, RelTypes.is_a);
 			item_connected = true;
 		}
-		if(!created) return Pair.of(item_connected, false);
 		if( child_level == 1){
 			child.createRelationshipTo(root, RelTypes.is_a);
 			return Pair.of(item_connected, false);
@@ -111,6 +109,10 @@ public class RXparser extends ServerPlugin
 			child.createRelationshipTo(root, RelTypes.is_a);
 			return Pair.of(item_connected, false);
 		}
+		
+		if(!parent_created.getRight() && !child_created.getRight()) 
+			return Pair.of(item_connected, false);
+
 		Node parent = parent_created.getLeft();
 		child.createRelationshipTo(parent, RelTypes.is_a);
 		return Pair.of(item_connected, true);
