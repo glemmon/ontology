@@ -108,7 +108,10 @@ public class RXparser extends ServerPlugin
 		}
 		int parent_level=child_level-1;
 		Pair<Node, Boolean> parent_created = get_catalog(db, r, parent_level, type_code, type);
-		if(parent_created == null) throw new AssertionError("parent cannot be null if child is not null");
+		if(parent_created == null){
+			child.createRelationshipTo(root, RelTypes.is_a);
+			return Pair.of(item_connected, false);
+		}
 		Node parent = parent_created.getLeft();
 		//child.createRelationshipTo(parent, RelTypes.is_a);
 		return Pair.of(item_connected, true);
@@ -118,7 +121,7 @@ public class RXparser extends ServerPlugin
 		if(item_created == null) throw new AssertionError("item_created shouldn't be null");
 		if(!item_created.getRight()) return; // Already processed
 		Node item = item_created.getLeft();
-		for(int child_level=5; child_level>1; --child_level){
+		for(int child_level=5; child_level>0; --child_level){
 			Pair<Boolean, Boolean> itemconnected_continue = _parse_record(db, r, root, item, child_level);
 			if(itemconnected_continue == null) throw new AssertionError("test1");
 			boolean stop = ! itemconnected_continue.getRight();
