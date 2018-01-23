@@ -71,7 +71,7 @@ public class RXparser extends ServerPlugin
 		String type_code_str = r.get("CATALOG_TYPE_CODE");
 		int type_code = Integer.parseInt(type_code_str);
 		String type = r.get("CATALOG_TYPE");
-		String child_level_str = Integer.toString(child_level);
+		String child_level_str = child_level == 5 ? "" : Integer.toString(child_level);
 		String child_name_label = "CATALOG";
 		if(child_level<5) child_name_label += "_HIER"+child_level_str;
 		String child_code_label = child_name_label+"_CODE";
