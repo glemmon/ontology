@@ -150,12 +150,12 @@ public class RXparser extends ServerPlugin
 			for (CSVRecord record : records) {
 				parse_record(db, record, root);
 				++i;
-				//if(i==99){// batches of 100
-					//i=0;
+				if(i==999){// batches of 100
+					i=0;
 					tx.success();
 					tx.close();
 					tx = db.beginTx();
-				//}
+				}
 				logger.info(Integer.toString(i)+" "+record.get("ITEM_DWID"));
 			}
 			
