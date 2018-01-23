@@ -15,7 +15,6 @@ import org.eihg.phevor.utility.GraphConvenience.RelTypes;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.server.plugins.Description;
@@ -27,13 +26,19 @@ import org.neo4j.server.plugins.Source;
 public class RXparser extends ServerPlugin
 {	
 	private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
-	private static Number get_code(String code_str, int level){
-		return level == 4 ?
-				Long.parseLong(code_str)
-				: Integer.parseInt(code_str);
-	}
+	//For now keep all codes as strings
+	//private static Object get_code(String code_str){
+	//	try{
+	//		return Integer.parseInt(code_str);
+	//	}catch(NumberFormatException e){}
+	//	try{
+	//		return Long.parseLong(code_str);
+	//	}catch(NumberFormatException e){
+	//		return code_str;
+	//	}
+	//}
 	
-	private static Node create_rx(GraphDatabaseService db, int level, Number code, String name, int type_code, String type){
+	private static Node create_rx(GraphDatabaseService db, int level, String code, String name, int type_code, String type){
 		Node n = db.createNode(Labels.RX);
 		n.setProperty("level", level);
 		n.setProperty("id", code);
@@ -61,7 +66,7 @@ public class RXparser extends ServerPlugin
 		return Pair.of(item,true);
 	}
 	
-	private static Node find_catalog(GraphDatabaseService db, int level, Number code){
+	private static Node find_catalog(GraphDatabaseService db, int level, String code){
 		ResourceIterator<Node> nodes = db.findNodes(Labels.RX, "id", code);
 		while(nodes.hasNext()){
 			Node n = nodes.next();
@@ -80,12 +85,12 @@ public class RXparser extends ServerPlugin
 		String code_label = name_label+"_CODE";
 		String code_str = r.get(code_label);
 		if(code_str.isEmpty()) return null;
-		Number child_code = get_code(code_str, level);
-		Node child = find_catalog(db, level, child_code);
-		if(child != null) return child;
-		String child_name = r.get(name_label);
-		child = create_rx(db, level, child_code, child_name, type_code, type);
-		return child;
+		//Object child_code = get_code(code_str);
+		Node found = find_catalog(db, level, code_str);
+		if(found != null) return found;
+		String name = r.get(name_label);
+		found = create_rx(db, level, code_str, name, type_code, type);
+		return found;
 	}
 	
 	// Item connected, continue
