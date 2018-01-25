@@ -23,7 +23,7 @@ import org.neo4j.server.plugins.PluginTarget;
 import org.neo4j.server.plugins.ServerPlugin;
 import org.neo4j.server.plugins.Source;
 
-public class RXparser extends ServerPlugin
+public class GPIparser extends ServerPlugin
 {	
 	private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
 	
@@ -39,7 +39,7 @@ public class RXparser extends ServerPlugin
 	}
 	
 	private static Node create_rx(GraphDatabaseService db, int level, Object code, String name, Integer type_code, String type){
-		Node n = db.createNode(Labels.RX);
+		Node n = db.createNode(Labels.GPI);
 		n.setProperty("level", level);
 		n.setProperty("id", code);
 		n.setProperty("name", name);
@@ -50,10 +50,10 @@ public class RXparser extends ServerPlugin
 	
 	private static Pair<Node, Boolean> get_item(GraphDatabaseService db, CSVRecord r){
 		String dwid_str = r.get("ITEM_DWID");
-		int dwid = Integer.parseInt(dwid_str);
-		Node item = db.findNode(Labels.RX, "dwid", dwid);
+		Object dwid = get_code(dwid_str);
+		Node item = db.findNode(Labels.ITEM, "dwid", dwid);
 		if(item!=null) return Pair.of(item,false);
-		item = db.createNode(Labels.RX);
+		item = db.createNode(Labels.ITEM);
 		item.setProperty("dwid", dwid);
 		String id_str = r.get("ITEM_CODE");
 		Object id = get_code(id_str);
@@ -63,7 +63,7 @@ public class RXparser extends ServerPlugin
 	}
 	
 	private static Node find_catalog(GraphDatabaseService db, int level, Object code){
-		ResourceIterator<Node> nodes = db.findNodes(Labels.RX, "id", code);
+		ResourceIterator<Node> nodes = db.findNodes(Labels.GPI, "id", code);
 		while(nodes.hasNext()){
 			Node n = nodes.next();
 			int other_level = (int)n.getProperty("level", 0);
@@ -118,6 +118,7 @@ public class RXparser extends ServerPlugin
 		child.createRelationshipTo(parent, RelTypes.is_a);
 		return Pair.of(item_connected, true);
 	}
+	
 	private static void parse_record(GraphDatabaseService db, CSVRecord r, Node root){
 		Pair<Node,Boolean> item_created = get_item(db, r);
 		if(item_created == null) throw new AssertionError("item_created shouldn't be null");
@@ -132,16 +133,17 @@ public class RXparser extends ServerPlugin
 			if(item != null && item_connected) item = null;
 		}
 	}
-	
+		
 	private static void _parse_rx(GraphDatabaseService db, String in) throws IOException{
 		final CSVFormat format = CSVFormat.TDF.withFirstRecordAsHeader();
+		Transaction tx = db.beginTx();
+		//// Process Nodes ////
 		try(
 				final Reader reader = new FileReader(in);
 		){
 			final Iterable<CSVRecord> records = format.parse(reader);
 			int i = 0;
-			Transaction tx = db.beginTx();
-			final Node root = db.findNode(Labels.RX, "id", 0);
+			final Node root = db.findNode(Labels.GPI, "id", 0);
 			if(root == null) throw new AssertionError("root test");
 			for (CSVRecord record : records) {
 				parse_record(db, record, root);
@@ -164,10 +166,10 @@ public class RXparser extends ServerPlugin
 	@PluginTarget( GraphDatabaseService.class )
 	public String parse_rx(
 			@Source GraphDatabaseService db,            
-			@Description( "Input File" )
-			@Parameter( name = "in_file" ) String in
+			@Description( "Node File" )
+			@Parameter( name = "node_file" ) String nodes
 	) throws IOException{       
-		_parse_rx(db, in);
+		_parse_rx(db, nodes);
 		return "complete";
 	}
 }
