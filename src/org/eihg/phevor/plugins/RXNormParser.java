@@ -67,8 +67,6 @@ public class RXNormParser extends ServerPlugin
 		){
 			final Iterable<CSVRecord> records = format.parse(reader);
 			int i = 0;
-			final Node root = db.findNode(Labels.RX, "id", 0);
-			if(root == null) throw new AssertionError("root test");
 			for (CSVRecord record : records) {
 				process_node(db, record); //, root);
 				++i;
@@ -112,7 +110,7 @@ public class RXNormParser extends ServerPlugin
 	public String parse_rx(
 			@Source GraphDatabaseService db,            
 			@Description( "Input File" )
-			@Parameter( name = "in_file" ) String nodes,
+			@Parameter( name = "node_file" ) String nodes,
 			@Description( "Relation File" )
 			@Parameter( name = "relation_file" ) String relations
 	) throws IOException{       
