@@ -76,7 +76,7 @@ public class RXNormParser extends ServerPlugin
 					tx.close();
 					tx = db.beginTx();
 				}
-				logger.info(Integer.toString(i)+" "+record.get("ITEM_DWID"));
+				//logger.info(Integer.toString(i)+" "+record.get("aui"));
 			}
 			
 			tx.success();
@@ -97,7 +97,7 @@ public class RXNormParser extends ServerPlugin
 					tx.close();
 					tx = db.beginTx();
 				}
-				logger.info(Integer.toString(i)+" "+record.get("ITEM_DWID"));
+				//logger.info(Integer.toString(i)+" "+record.get("rui"));
 			}
 			
 			tx.success();
