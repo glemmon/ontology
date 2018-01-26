@@ -66,8 +66,7 @@ public class GPIparser extends ServerPlugin
 		ResourceIterator<Node> nodes = db.findNodes(Labels.GPI, "id", code);
 		while(nodes.hasNext()){
 			Node n = nodes.next();
-			int other_level = (int)n.getProperty("level", 0);
-			if( other_level == level ){
+			if( n.getProperty("level", 0).equals(level) ){
 				return n;
 			}
 		}
@@ -166,8 +165,8 @@ public class GPIparser extends ServerPlugin
 	@PluginTarget( GraphDatabaseService.class )
 	public String parse_rx(
 			@Source GraphDatabaseService db,            
-			@Description( "Node File" )
-			@Parameter( name = "node_file" ) String nodes
+			@Description( "Each row contains catalog hierarchy for item" )
+			@Parameter( name = "gpi_file" ) String nodes
 	) throws IOException{       
 		_parse_rx(db, nodes);
 		return "complete";
