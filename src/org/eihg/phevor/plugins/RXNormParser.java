@@ -5,18 +5,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 
-import java.util.logging.Logger;
+//import java.util.logging.Logger;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.tuple.Pair;
 import org.eihg.phevor.utility.GraphConvenience.Labels;
 import org.eihg.phevor.utility.GraphConvenience.RelTypes;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
@@ -26,7 +23,7 @@ import org.neo4j.server.plugins.Source;
 
 public class RXNormParser extends ServerPlugin
 {	
-	private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
+	//private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
 	
 	private static void process_relation(GraphDatabaseService db, CSVRecord record){
 		Integer aui1 = Integer.parseInt( record.get("RXAUI1"));
@@ -62,7 +59,7 @@ public class RXNormParser extends ServerPlugin
 		final CSVFormat format = CSVFormat.TDF.withFirstRecordAsHeader();
 		Transaction tx = db.beginTx();
 		//// Process Nodes ////
-		try(
+		/*try(
 				final Reader reader = new FileReader(nodes);
 		){
 			final Iterable<CSVRecord> records = format.parse(reader);
@@ -81,13 +78,14 @@ public class RXNormParser extends ServerPlugin
 			
 			tx.success();
 			tx.close();
-		}
+		}*/
 		//// Process Relationships ////
 		try(
 				final Reader reader = new FileReader(relations);
 		){
 			final Iterable<CSVRecord> records = format.parse(reader);
 			int i = 0;
+			//tx = db.beginTx();
 			for (CSVRecord record : records) {
 				process_relation(db, record); //, root);
 				++i;
