@@ -132,7 +132,18 @@ public class GPIparser extends ServerPlugin
 			if(item != null && item_connected) item = null;
 		}
 	}
-		
+	
+	private static Node find_root(GraphDatabaseService db){
+		ResourceIterator<Node> roots = db.findNodes(Labels.ROOT);
+		while(roots.hasNext()){
+			Node n = roots.next();
+			if( n.hasLabel(Labels.GPI)){
+				return n;
+			}
+		}
+		return null;
+	}
+	
 	private static void _parse_rx(GraphDatabaseService db, String in) throws IOException{
 		final CSVFormat format = CSVFormat.TDF.withFirstRecordAsHeader();
 		Transaction tx = db.beginTx();
@@ -142,7 +153,7 @@ public class GPIparser extends ServerPlugin
 		){
 			final Iterable<CSVRecord> records = format.parse(reader);
 			int i = 0;
-			final Node root = db.findNode(Labels.GPI, "id", 0);
+			final Node root = find_root(db);
 			if(root == null) throw new AssertionError("root test");
 			for (CSVRecord record : records) {
 				parse_record(db, record, root);
