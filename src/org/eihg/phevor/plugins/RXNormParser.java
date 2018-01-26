@@ -63,7 +63,7 @@ public class RXNormParser extends ServerPlugin
 		final CSVFormat format = CSVFormat.TDF.withFirstRecordAsHeader();
 		Transaction tx = db.beginTx();
 		//// Process Nodes ////
-		/*try(
+		try(
 				final Reader reader = new FileReader(nodes);
 		){
 			final Iterable<CSVRecord> records = format.parse(reader);
@@ -82,7 +82,7 @@ public class RXNormParser extends ServerPlugin
 			
 			tx.success();
 			tx.close();
-		}*/
+		}
 		//// Process Relationships ////
 		try(
 				final Reader reader = new FileReader(relations);
