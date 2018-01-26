@@ -28,9 +28,9 @@ public class RXNormParser extends ServerPlugin
 	private static void process_relation(GraphDatabaseService db, CSVRecord record){
 		Integer aui1 = Integer.parseInt( record.get("RXAUI1"));
 		Integer aui2 = Integer.parseInt( record.get("RXAUI2"));
-		String rui = record.get("RUI");
-		String rel = record.get("REL");
-		String rela = record.get("RELA");
+		String rui = record.get("RUI").trim();
+		String rel = record.get("REL").trim();
+		String rela = record.get("RELA").trim();
 		Node n1 = db.findNode(Labels.RX, "aui", aui1);
 		Node n2 = db.findNode(Labels.RX, "aui", aui2);
 		Relationship r;
