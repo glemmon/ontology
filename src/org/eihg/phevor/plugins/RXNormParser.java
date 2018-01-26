@@ -28,7 +28,7 @@ public class RXNormParser extends ServerPlugin
 	private static void process_relation(GraphDatabaseService db, CSVRecord record){
 		Integer aui1 = Integer.parseInt( record.get("RXAUI1"));
 		Integer aui2 = Integer.parseInt( record.get("RXAUI2"));
-		Integer rui = Integer.parseInt( record.get("RUI"));
+		String rui = record.get("RUI");
 		String rel = record.get("REL");
 		String rela = record.get("RELA");
 		Node n1 = db.findNode(Labels.RX, "aui", aui1);
@@ -39,7 +39,7 @@ public class RXNormParser extends ServerPlugin
 		else
 			r = n1.createRelationshipTo(n2, RelTypes.valueOf(rela));
 		r.setProperty("rel", rel);
-		r.setProperty("rui", rui);
+		if(!rui.isEmpty()) r.setProperty("rui", Integer.parseInt(rui));
 	}
 	
 	private static void process_node(GraphDatabaseService db, CSVRecord record){
