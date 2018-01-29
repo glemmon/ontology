@@ -36,7 +36,6 @@ public class Item2RXNormParser extends ServerPlugin
 		if(n1==null) throw new AssertionError("Item missing: "+item_dwid_str);
 		Node n2 = db.findNode(Labels.Concept, "cui", rxcui_norm);
 		if(n2==null) throw new AssertionError("Concept missing: "+rxcui_norm_str);
-		n1
 		n1.createRelationshipTo(n2, RelTypes.is_a);
 	}
 	
