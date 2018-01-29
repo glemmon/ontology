@@ -98,7 +98,7 @@ public class RXNormParser extends ServerPlugin
 		){
 			final Iterable<CSVRecord> records = format.parse(reader);
 			int i = 0;
-			//tx = db.beginTx();
+			tx = db.beginTx();
 			for (CSVRecord record : records) {
 				process_relation(db, record); //, root);
 				++i;
