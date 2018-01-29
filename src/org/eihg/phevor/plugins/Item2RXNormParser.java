@@ -34,16 +34,7 @@ public class Item2RXNormParser extends ServerPlugin
 		int rxcui_norm = Integer.parseInt(rxcui_norm_str);
 		Node n1 = db.findNode(Labels.ITEM, "dwid", item_dwid);
 		Node n2 = db.findNode(Labels.Concept, "cui", rxcui_norm);
-		String rui = record.get("RUI").trim();
-		String rel = record.get("REL").trim();
-		String rela = record.get("RELA").trim();
-		Relationship r;
-		if(rela.isEmpty())
-			r = n1.createRelationshipTo(n2, RelTypes.valueOf(rel));
-		else
-			r = n1.createRelationshipTo(n2, RelTypes.valueOf(rela));
-		r.setProperty("rel", rel);
-		if(!rui.isEmpty()) r.setProperty("rui", Integer.parseInt(rui));
+		n1.createRelationshipTo(n2, RelTypes.is_a);
 	}
 	
 	private static void _item2rxnorm(GraphDatabaseService db, String nodes) throws IOException{
