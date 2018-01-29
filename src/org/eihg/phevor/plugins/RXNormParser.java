@@ -11,6 +11,8 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.eihg.phevor.utility.GraphConvenience.Labels;
 import org.eihg.phevor.utility.GraphConvenience.RelTypes;
+import org.neo4j.cypher.internal.compiler.v2_3.pipes.matching.Relationships;
+import org.neo4j.cypher.internal.compiler.v3_0.executionplan.ReadsRelationshipsWithTypes;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -32,8 +34,8 @@ public class RXNormParser extends ServerPlugin
 		if(aui2_str.isEmpty()) return;
 		int aui1 = Integer.parseInt(aui1_str);
 		int aui2 = Integer.parseInt(aui2_str);
-		Node n1 = db.findNode(Labels.RX, "aui", aui1);
-		Node n2 = db.findNode(Labels.RX, "aui", aui2);
+		Node n1 = db.findNode(Labels.Atom, "aui", aui1);
+		Node n2 = db.findNode(Labels.Atom, "aui", aui2);
 		String rui = record.get("RUI").trim();
 		String rel = record.get("REL").trim();
 		String rela = record.get("RELA").trim();
@@ -52,11 +54,18 @@ public class RXNormParser extends ServerPlugin
 		String sab = record.get("SAB");
 		String tty = record.get("TTY");
 		String name = record.get("STR");
-		Node n = db.createNode(Labels.RX, Labels.valueOf(sab));
-		n.setProperty("aui", aui);
-		n.setProperty("cui", cui);
-		n.setProperty("tty", tty);
-		n.setProperty("name", name);
+		Node atom = db.createNode(Labels.Atom, Labels.valueOf(sab));
+		atom.setProperty("aui", aui);	
+		atom.setProperty("tty", tty);
+		atom.setProperty("name", name);
+		Node concept = db.findNode(Labels.Concept, "cui", cui);
+		if(concept==null){
+			concept = db.createNode(Labels.Concept);
+			concept.setProperty("cui", cui);
+			concept.setProperty("name", name);
+		}else if(sab=="RXNORM") concept.setProperty("name", name);
+		
+		atom.createRelationshipTo(concept, RelTypes.is_a);
 	}
 	
 	private static void _parse_rx(GraphDatabaseService db, String nodes, String relations) throws IOException{

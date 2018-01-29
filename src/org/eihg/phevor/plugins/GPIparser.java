@@ -177,7 +177,7 @@ public class GPIparser extends ServerPlugin
 	public String parse_rx(
 			@Source GraphDatabaseService db,            
 			@Description( "Each row contains catalog hierarchy for item" )
-			@Parameter( name = "gpi_file" ) String nodes
+			@Parameter( name = "item2rxnorm_file" ) String nodes
 	) throws IOException{       
 		_parse_rx(db, nodes);
 		return "complete";
