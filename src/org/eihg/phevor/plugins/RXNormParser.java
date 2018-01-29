@@ -120,7 +120,7 @@ public class RXNormParser extends ServerPlugin
 	@PluginTarget( GraphDatabaseService.class )
 	public String parse_rx(
 			@Source GraphDatabaseService db,            
-			@Description( "Input File" )
+			@Description( "Node File" )
 			@Parameter( name = "node_file" ) String nodes,
 			@Description( "Relation File" )
 			@Parameter( name = "relation_file" ) String relations
