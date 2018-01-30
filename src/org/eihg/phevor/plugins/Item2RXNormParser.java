@@ -33,9 +33,11 @@ public class Item2RXNormParser extends ServerPlugin
 		int item_dwid = Integer.parseInt(item_dwid_str);
 		int rxcui_norm = Integer.parseInt(rxcui_norm_str);
 		Node n1 = db.findNode(Labels.ITEM, "dwid", item_dwid);
-		if(n1==null) throw new AssertionError("Item missing: "+item_dwid_str);
+		//if(n1==null) throw new AssertionError("Item missing: "+item_dwid_str);
+		if(n1==null) return;
 		Node n2 = db.findNode(Labels.Concept, "cui", rxcui_norm);
-		if(n2==null) return; // Concept missing - retired.
+		//if(n2==null) throw new AssertionError("Concept missing: "+rxcui_norm_str);
+		if(n2==null) return;
 		n1.createRelationshipTo(n2, RelTypes.is_a);
 	}
 	
