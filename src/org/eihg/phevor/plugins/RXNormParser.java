@@ -4,6 +4,7 @@ package org.eihg.phevor.plugins;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Set;
 
 //import java.util.logging.Logger;
 
@@ -23,9 +24,22 @@ import org.neo4j.server.plugins.PluginTarget;
 import org.neo4j.server.plugins.ServerPlugin;
 import org.neo4j.server.plugins.Source;
 
+import com.google.common.collect.Sets;
+
 public class RXNormParser extends ServerPlugin
 {	
 	//private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
+	//TODO use Java 9 Set.of()
+	public static final Set<String> reciprocal_relations = Sets.newHashSet(
+			"contains", "has_form", "has_dose_form", 
+			"has_quantified_form", "has_tradename",
+			"inverse_isa", "has_precise_ingredient",
+			"consists_of", "has_doseformgroup",
+			"includes", "has_ingredient",
+			"has_ingredients", "may_treat",
+			"has_mechanism_of_action", "has_metabolic_site",
+			"has_part", "reformulated_to"
+	);
 	
 	private static void process_relation(GraphDatabaseService db, CSVRecord record){
 		String aui1_str = record.get("RXAUI1").trim();
@@ -39,11 +53,14 @@ public class RXNormParser extends ServerPlugin
 		String rui = record.get("RUI").trim();
 		String rel = record.get("REL").trim();
 		String rela = record.get("RELA").trim();
+		if(reciprocal_relations.contains(rela)) return;
+		if(rela.isEmpty() && rel.equals("SY"))
+			rela = "is_a";
 		Relationship r;
 		if(rela.isEmpty())
-			r = n1.createRelationshipTo(n2, RelTypes.valueOf(rel));
+			r = n2.createRelationshipTo(n1, RelTypes.valueOf(rel));
 		else
-			r = n1.createRelationshipTo(n2, RelTypes.valueOf(rela));
+			r = n2.createRelationshipTo(n1, RelTypes.valueOf(rela));
 		r.setProperty("rel", rel);
 		if(!rui.isEmpty()) r.setProperty("rui", Integer.parseInt(rui));
 	}
