@@ -89,48 +89,50 @@ public class RXNormParser extends ServerPlugin
 		final CSVFormat format = CSVFormat.TDF.withFirstRecordAsHeader();
 		Transaction tx = db.beginTx();
 		//// Process Nodes ////
-		try(
-				final Reader reader = new FileReader(nodes);
-		){
-			final Iterable<CSVRecord> records = format.parse(reader);
-			int i = 0;
-			for (CSVRecord record : records) {
-				process_node(db, record); //, root);
-				++i;
-				if(i==999){// batches of 100
-					i=0;
-					tx.success();
-					tx.close();
-					tx = db.beginTx();
+		if(nodes != null)
+			try(
+					final Reader reader = new FileReader(nodes);
+			){
+				final Iterable<CSVRecord> records = format.parse(reader);
+				int i = 0;
+				for (CSVRecord record : records) {
+					process_node(db, record); //, root);
+					++i;
+					if(i==999){// batches of 100
+						i=0;
+						tx.success();
+						tx.close();
+						tx = db.beginTx();
+					}
+					//logger.info(Integer.toString(i)+" "+record.get("aui"));
 				}
-				//logger.info(Integer.toString(i)+" "+record.get("aui"));
+				
+				tx.success();
+				tx.close();
 			}
-			
-			tx.success();
-			tx.close();
-		}
 		//// Process Relationships ////
-		try(
-				final Reader reader = new FileReader(relations);
-		){
-			final Iterable<CSVRecord> records = format.parse(reader);
-			int i = 0;
-			tx = db.beginTx();
-			for (CSVRecord record : records) {
-				process_relation(db, record); //, root);
-				++i;
-				if(i==999){// batches of 100
-					i=0;
-					tx.success();
-					tx.close();
-					tx = db.beginTx();
+		if(relations != null)
+			try(
+					final Reader reader = new FileReader(relations);
+			){
+				final Iterable<CSVRecord> records = format.parse(reader);
+				int i = 0;
+				tx = db.beginTx();
+				for (CSVRecord record : records) {
+					process_relation(db, record); //, root);
+					++i;
+					if(i==999){// batches of 100
+						i=0;
+						tx.success();
+						tx.close();
+						tx = db.beginTx();
+					}
+					//logger.info(Integer.toString(i)+" "+record.get("rui"));
 				}
-				//logger.info(Integer.toString(i)+" "+record.get("rui"));
+				
+				tx.success();
+				tx.close();
 			}
-			
-			tx.success();
-			tx.close();
-		}
 	}
 	
 	@Description( "Add ICD->CCS relations" )
