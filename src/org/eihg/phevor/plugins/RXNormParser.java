@@ -138,9 +138,9 @@ public class RXNormParser extends ServerPlugin
 	public String parse_rx(
 			@Source GraphDatabaseService db,            
 			@Description( "Node File" )
-			@Parameter( name = "node_file" ) String nodes,
+			@Parameter( name = "node_file", optional = true ) String nodes,
 			@Description( "Relation File" )
-			@Parameter( name = "relation_file" ) String relations
+			@Parameter( name = "relation_file", optional = true ) String relations
 	) throws IOException{       
 		_parse_rx(db, nodes, relations);
 		return "complete";
