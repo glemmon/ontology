@@ -93,7 +93,6 @@ public class GraphConvenience {
 	    has_ingredients,
 	    has_quantified_form,
 	    has_active_ingredient,
-	    isa,
 	    dose_form_of,
 	    has_dose_form,
 	    may_be_treated_by,
@@ -145,13 +144,6 @@ public class GraphConvenience {
 	    has_part,
 	    ingredients_of,
 	    quantified_form_of,
-	    RN,
-	    PAR,
-	    RB,
-	    SY,
-	    RO,
-	    SIB,
-	    CHD
 	}
 	
 	private static PathExpander<?> ascendants_path = PathExpanders.forTypesAndDirections(RelTypes.is_a, Direction.OUTGOING, RelTypes.part_of, Direction.OUTGOING);
