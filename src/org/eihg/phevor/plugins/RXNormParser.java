@@ -40,7 +40,6 @@ public class RXNormParser extends ServerPlugin
 		String rui = record.get("RUI").trim();
 		String rel = record.get("REL").trim();
 		String rela = record.get("RELA").trim();
-		if(rel.equals("PAR") || rel.equals("SIB")) return;
 		if(rela.equals("isa")) rela = "is_a";
 		if(rela.isEmpty()) rela = "is_a";
 		Relationship r = n2.createRelationshipTo(n1, RelTypes.valueOf(rela));

@@ -89,6 +89,7 @@ public class GraphConvenience {
 	    has_pharmacokinetics,
 	    site_of_metabolism,
 	    member_of,
+	    contains,
 	    has_ingredient,
 	    has_active_moiety,
 	    may_prevent,
