@@ -27,23 +27,7 @@ import org.neo4j.server.plugins.Source;
 import com.google.common.collect.Sets;
 
 public class RXNormParser extends ServerPlugin
-{	
-	//private static Logger logger = Logger.getLogger("org.eihg.phevor.plugins"); 
-	//TODO use Java 9 Set.of()
-	public static final Set<String> exclude_rela = Sets.newHashSet(
-			"contains", "has_form", "has_dose_form", 
-			"has_quantified_form", "has_tradename",
-			"inverse_isa", "has_precise_ingredient",
-			"consists_of", "has_doseformgroup",
-			"includes", "has_ingredient",
-			"has_ingredients", "may_treat",
-			"has_mechanism_of_action", "has_metabolic_site",
-			"has_part", "reformulated_to"
-	);
-	public static final Set<String> exclude_rel = Sets.newHashSet(
-			"PAR", "SIB"
-	);
-			
+{			
 	private static void process_relation(GraphDatabaseService db, CSVRecord record){
 		String aui1_str = record.get("RXAUI1").trim();
 		String aui2_str = record.get("RXAUI2").trim();
@@ -56,12 +40,10 @@ public class RXNormParser extends ServerPlugin
 		String rui = record.get("RUI").trim();
 		String rel = record.get("REL").trim();
 		String rela = record.get("RELA").trim();
-		if(exclude_rela.contains(rela)) return;
-		if(exclude_rel.contains(rel)) return;
+		if(rel.equals("PAR") || rel.equals("SIB")) return;
 		if(rela.equals("isa")) rela = "is_a";
 		if(rela.isEmpty()) rela = "is_a";
-		Relationship r;
-		r = n2.createRelationshipTo(n1, RelTypes.valueOf(rela));
+		Relationship r = n2.createRelationshipTo(n1, RelTypes.valueOf(rela));
 		r.setProperty("rel", rel);
 		if(!rui.isEmpty()) r.setProperty("rui", Integer.parseInt(rui));
 	}
