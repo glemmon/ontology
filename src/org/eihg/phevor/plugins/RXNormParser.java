@@ -72,10 +72,13 @@ public class RXNormParser extends ServerPlugin
 		String sab = record.get("SAB");
 		String tty = record.get("TTY");
 		String name = record.get("STR");
-		Node atom = db.createNode(Labels.Atom, Labels.valueOf(sab));
-		atom.setProperty("aui", aui);	
-		atom.setProperty("tty", tty);
-		atom.setProperty("name", name);
+		Node atom = db.findNode(Labels.Atom, "aui", aui);
+		if(atom==null){
+			atom = db.createNode(Labels.Atom, Labels.valueOf(sab));
+			atom.setProperty("aui", aui);	
+			atom.setProperty("tty", tty);
+			atom.setProperty("name", name);
+		}
 		Node concept = db.findNode(Labels.Concept, "cui", cui);
 		if(concept==null){
 			concept = db.createNode(Labels.Concept);
